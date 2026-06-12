@@ -1,0 +1,113 @@
+import type { CandidateStatus } from "./candidateStatus";
+
+export type ExpressionType = "phrasal_verb" | "collocation" | "idiom" | "sentence_pattern" | "other";
+export type Difficulty = "A2" | "B1" | "B2" | "C1" | "C2";
+export type MasteryStatus = "new" | "learning" | "review" | "mastered";
+export type GenerationStatus = "not_generated" | "generating" | "generated" | "failed" | "retryable";
+export type ReadingFeedback = "add_to_review" | "known" | "too_easy" | "bad_explanation";
+export type ReviewFeedback = "known" | "fuzzy" | "unknown";
+
+export interface Article {
+  id: string;
+  userId: string;
+  title: string;
+  sourceType: "txt" | "markdown";
+  rawText: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface Segment {
+  id: string;
+  userId: string;
+  articleId: string;
+  sequence: number;
+  text: string;
+  wordCount: number;
+  generationStatus: GenerationStatus;
+  progressStatus: "unread" | "reading" | "read";
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface CandidateExpression {
+  id: string;
+  userId: string;
+  articleId: string;
+  segmentId: string;
+  expression: string;
+  normalizedForm: string;
+  type: ExpressionType;
+  meaningZh: string;
+  localMeaning: string;
+  sentence: string;
+  sentenceTranslation: string;
+  syntaxHint: string | null;
+  difficulty: Difficulty;
+  valueScore: number;
+  candidateStatus: CandidateStatus;
+  statusReason: string;
+  occurrenceCount: number;
+  modelProvider: string;
+  modelName: string;
+  promptVersion: string;
+  generationVersion: string;
+  generatedAt: string;
+}
+
+export interface ExpressionSense {
+  id: string;
+  userId: string;
+  expression: string;
+  normalizedForm: string;
+  type: ExpressionType;
+  meaningZh: string;
+  difficulty: Difficulty;
+  masteryStatus: MasteryStatus;
+  srsDueAt: string | null;
+  reviewCount: number;
+  mistakeCount: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface Occurrence {
+  id: string;
+  userId: string;
+  expressionSenseId: string;
+  articleId: string;
+  segmentId: string;
+  sentence: string;
+  sentenceTranslation: string;
+  localMeaning: string;
+  syntaxHint: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface ReviewLog {
+  id: string;
+  userId: string;
+  expressionSenseId: string;
+  feedback: ReviewFeedback;
+  previousDueAt: string | null;
+  nextDueAt: string;
+  reviewedAt: string;
+  createdAt: string;
+}
+
+export interface ClientOperation {
+  clientOperationId: string;
+  userId: string;
+  operationType: string;
+  targetType: string;
+  targetId: string;
+  payload: Record<string, unknown>;
+  clientCreatedAt: string;
+  syncStatus: "pending" | "synced" | "failed";
+  serverAppliedAt: string | null;
+}
