@@ -1,0 +1,355 @@
+:root {
+  color: #172033;
+  background: #eef2f7;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button {
+  font: inherit;
+}
+
+.appShell {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  background:
+    linear-gradient(180deg, rgba(238, 242, 247, 0.9), rgba(221, 228, 238, 0.9)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800' viewBox='0 0 1200 800'%3E%3Crect width='1200' height='800' fill='%23f3f7f5'/%3E%3Cpath d='M0 550 C230 480 330 610 560 520 C790 430 930 470 1200 390 L1200 800 L0 800 Z' fill='%23d8e6e0'/%3E%3Cpath d='M0 650 C210 610 390 710 640 640 C880 570 980 615 1200 560 L1200 800 L0 800 Z' fill='%23cdd9e8'/%3E%3C/svg%3E");
+  background-size: cover;
+}
+
+.phoneFrame {
+  position: relative;
+  width: min(100%, 430px);
+  min-height: 100vh;
+  background: #fbfcfe;
+  box-shadow: 0 18px 60px rgba(23, 32, 51, 0.14);
+  overflow: hidden;
+}
+
+.screen {
+  min-height: calc(100vh - 74px);
+  padding: 24px 18px 116px;
+}
+
+.readingHeader p,
+.typeLabel,
+.libraryItem p {
+  margin: 0 0 6px;
+  color: #536174;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.18;
+}
+
+.passage {
+  margin-top: 22px;
+  font-size: 1.08rem;
+  line-height: 1.85;
+}
+
+.highlight {
+  display: inline;
+  border: 0;
+  border-radius: 5px;
+  padding: 1px 3px;
+  color: #17324d;
+  background: #ffe08a;
+  box-shadow: inset 0 -2px 0 #e8ae2f;
+}
+
+.morePanel {
+  margin-top: 24px;
+  border-top: 1px solid #dce3ec;
+  padding-top: 12px;
+}
+
+.moreToggle,
+.moreItem {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #1f2d3d;
+  padding: 12px 2px;
+  font-weight: 700;
+}
+
+.moreList {
+  display: grid;
+  gap: 8px;
+}
+
+.moreItem {
+  border: 1px solid #dfe6ef;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+  text-align: left;
+}
+
+.moreItem small {
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 84px;
+  width: min(430px, 100vw);
+  max-height: min(72vh, 620px);
+  overflow: auto;
+  transform: translateX(-50%);
+  border: 1px solid #dce3ec;
+  border-radius: 18px 18px 0 0;
+  background: #ffffff;
+  padding: 10px 18px 18px;
+  box-shadow: 0 -18px 42px rgba(23, 32, 51, 0.18);
+}
+
+.sheetHandle {
+  width: 42px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: #c7d0dd;
+}
+
+.sheetTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sheetTop h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.iconButton {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dce3ec;
+  border-radius: 999px;
+  background: #f8fafc;
+}
+
+.localMeaning {
+  margin: 14px 0 4px;
+  font-size: 1rem;
+}
+
+.meaningZh {
+  margin: 0;
+  color: #475569;
+}
+
+.sheetActions,
+.reviewActions,
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sheetActions {
+  margin: 16px 0;
+}
+
+.sheetActions button,
+.expandButton,
+.reviewActions button {
+  min-height: 42px;
+  border: 1px solid #d7dfeb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #213047;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.expandButton {
+  width: 100%;
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.fullExplanation {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.fullExplanation h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.fullExplanation p,
+.answer p {
+  margin: 0;
+}
+
+.translation,
+.syntaxHint,
+.reviewNote {
+  color: #536174;
+  font-size: 0.92rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+dt {
+  color: #64748b;
+  font-size: 0.74rem;
+}
+
+dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.reviewCard,
+.libraryItem {
+  border: 1px solid #dfe6ef;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 18px;
+}
+
+.prompt {
+  margin: 18px 0;
+  line-height: 1.65;
+}
+
+.answer {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f1f5f9;
+}
+
+.reviewActions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.reviewEmpty {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.library {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.libraryItem h2 {
+  margin: 0 0 8px;
+}
+
+.libraryItem span {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 76px;
+  width: min(390px, calc(100vw - 28px));
+  transform: translateX(-50%);
+  margin: 0;
+  border: 1px solid #dce3ec;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #475569;
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  box-shadow: 0 10px 28px rgba(23, 32, 51, 0.12);
+}
+
+.tabs {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  width: min(430px, 100vw);
+  transform: translateX(-50%);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid #dce3ec;
+  background: #ffffff;
+}
+
+.tabs button {
+  min-height: 52px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.tabs button.active {
+  background: #e8f0ff;
+  color: #1d4ed8;
+}
+
+@media (min-width: 760px) {
+  .phoneFrame {
+    min-height: 860px;
+    margin: 28px 0;
+    border-radius: 28px;
+  }
+
+  .screen {
+    min-height: 786px;
+  }
+}
