@@ -20,6 +20,8 @@ The main loop is:
 6. Let the user manually add worthwhile expressions to SRS.
 7. Review due `ExpressionSense` items later with active recall.
 
+The product can also create learning cards from learner-provided context outside an article. For example, the learner may enter a word seen in a game, programming documentation, a work chat, or another real-life context. This still uses AI generation and learner confirmation; it is not raw manual card entry.
+
 ## V1 User Experience
 
 ### Import
@@ -132,6 +134,46 @@ Manual selection generation must preserve generation metadata:
 - `generated_at`
 
 If offline, the selection request can be stored as a pending client operation with a `client_operation_id`, but LLM generation itself runs only when network and backend are available.
+
+### Context Entry AI Card Generation
+
+The learner can create a card candidate without starting from an imported article. This supports expressions encountered in places such as games, programming, work messages, videos, or conversations.
+
+The learner supplies:
+
+- Expression or word
+- Context label, such as `game`, `programming`, `work`, `video`, or a free-form label
+- Optional short note about where it appeared
+- Optional sentence or snippet if the learner has one
+- Optional learner intent, such as "I do not know what this means" or "I want to remember this usage"
+
+The learner does not write the card content manually. The backend calls the LLM to generate one or more `ExpressionSense` drafts. The LLM should infer meaning from the provided context when possible and ask for more context only when the input is too ambiguous.
+
+The generated draft should include:
+
+- Suggested expression
+- Normalized form
+- Type
+- Meaning in Chinese
+- Local meaning for the supplied context
+- Example sentence appropriate to the context
+- Example sentence translation
+- Difficulty
+- Minimal usage hint when useful
+- Duplicate or near-duplicate warning when applicable
+- Recommendation: add, merge with existing sense, or reject as too ambiguous
+
+The learner must confirm before a generated draft enters SRS. Confirmation creates or activates an `ExpressionSense` and stores a non-article `Occurrence` as context evidence.
+
+Context-entry generation must preserve generation metadata:
+
+- `model_provider`
+- `model_name`
+- `prompt_version`
+- `generation_version`
+- `generated_at`
+
+If offline, the context-entry request can be stored as a pending client operation with a `client_operation_id`, but LLM generation itself runs only when network and backend are available.
 
 ### Review Page
 
@@ -337,13 +379,18 @@ Important fields:
 
 The context evidence for an `ExpressionSense`. It is not the scheduled memory object.
 
+An occurrence can come from an imported article or from learner-provided external context. Article-based occurrences have `article_id` and `segment_id`. Context-entry occurrences can leave those fields empty and instead store the context source fields.
+
 Important fields:
 
 - `id`
 - `user_id`
 - `expression_sense_id`
+- `source_type`: `article` or `context_entry`
 - `article_id`
 - `segment_id`
+- `context_label`
+- `context_note`
 - `sentence`
 - `sentence_translation`
 - `local_meaning`
@@ -385,18 +432,19 @@ Important fields:
 
 The backend must use `client_operation_id` for idempotency so repeated uploads do not apply an action twice.
 
-Manual selection AI generation should use client operations for idempotency. A repeated upload of the same selection request must not create duplicate senses or duplicate generation jobs.
+Manual selection and context-entry AI generation should use client operations for idempotency. A repeated upload of the same generation request must not create duplicate senses or duplicate generation jobs.
 
 Recommended operation types include:
 
 - `reading.add_to_review`
 - `reading.feedback`
 - `reading.generate_card_from_selection`
+- `cards.generate_card_from_context`
 - `review.feedback`
 
 ### AiGenerationJob
 
-V1 can start with an in-process queue, but the domain should treat generation as a job so article preselection and manual selection generation share a consistent model.
+V1 can start with an in-process queue, but the domain should treat generation as a job so article preselection, manual selection generation, and context-entry generation share a consistent model.
 
 Important fields:
 
@@ -404,8 +452,10 @@ Important fields:
 - `user_id`
 - `article_id`
 - `segment_id`
-- `source_type`: `segment_preselection` or `manual_selection`
+- `source_type`: `segment_preselection`, `manual_selection`, or `context_entry`
 - `selected_text`
+- `context_label`
+- `context_note`
 - `sentence`
 - `context`
 - `status`
@@ -496,6 +546,7 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 - Lightweight highlight popover with optional full expansion
 - More expressions section for `backup_candidate` and `ignored_over_limit`
 - Manual selection AI card generation from learner-selected text
+- Context-entry AI card generation from a learner-entered expression and real-world context
 - ExpressionSense / Occurrence separation
 - Card library for `ExpressionSense` records and occurrences
 - Soft daily new-card recommendation limit of 6
@@ -518,6 +569,7 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 - Permanent sentence cards
 - Long grammar lessons
 - Multiple generated example sentences per expression
+- Raw manual card creation without AI generation
 - Exam-style exercises
 - Native mobile app
 
@@ -533,6 +585,9 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 - Reading-page `add_to_review` creates or activates SRS for the related `ExpressionSense`.
 - Selecting text in the reading page can request AI-generated card candidates.
 - Manual selection AI generation creates candidates only after backend LLM processing and learner confirmation.
+- Entering an expression plus a real-world context can request AI-generated card candidates without requiring an article.
+- Context-entry AI generation creates candidates only after backend LLM processing and learner confirmation.
+- Context-entry occurrences are stored as non-article evidence and do not pretend to have article or segment sources.
 - Review-page feedback changes SRS intervals.
 - Review cards provide enough post-reveal learning detail to be useful beyond a bare translation.
 - A card library lists `ExpressionSense` records and can open their occurrence evidence.

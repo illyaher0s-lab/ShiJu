@@ -72,6 +72,7 @@ After the first local MVP review, the next visible milestone must address learni
 - Richer review cards that are useful after recall, not just expression plus Chinese meaning.
 - A card library for `ExpressionSense` records, separate from article/library import views.
 - Manual selection AI card generation, where the learner selects text and the system calls the LLM to generate card candidates.
+- Context-entry AI card generation, where the learner enters an expression plus real-world context such as game or programming and the system calls the LLM to generate card candidates.
 - A visible TXT/Markdown import entry point.
 
 MVP excludes:
@@ -80,6 +81,7 @@ MVP excludes:
 - Real AI calls.
 - Real PostgreSQL.
 - Real IndexedDB sync.
+- Raw manual card authoring without AI generation.
 - Authentication.
 - Server deployment.
 
@@ -141,6 +143,12 @@ MVP excludes:
 
 - Create: `apps/web/src/features/import/ImportPage.tsx`  
   Static MVP fixture-mode import screen that keeps the app flow visible before real file import exists.
+
+- Create: `apps/web/src/features/cards/contextGeneration.ts`
+  Deterministic local mock builder for learner-entered expression plus real-world context generation.
+
+- Create: `apps/web/src/features/cards/ContextCardGenerator.tsx`
+  Form and draft preview for context-entry AI card generation.
 
 - Create: `apps/web/src/lib/highlightText.tsx`  
   Safe text highlighting from occurrence ranges.
@@ -205,6 +213,9 @@ MVP excludes:
 
 - Create: `apps/api/src/services/generationService.ts`  
   First-segment priority and mock generation workflow.
+
+- Create: `apps/api/src/services/contextGenerationService.ts`
+  Backend contract for LLM-backed card generation from learner-entered expression and context.
 
 - Create: `apps/api/src/services/srsService.ts`  
   Review updates.
@@ -2556,6 +2567,447 @@ Expected: commit succeeds.
 
 ---
 
+## Task 16: Add Context-Entry AI Card Generation Mock Flow
+
+**Owner:** Codex local agent
+
+**Reason:** Learners also meet words outside imported articles, such as in games, programming documentation, work messages, or videos. They should be able to enter the expression and context, then let AI generate the card. This is not raw manual card authoring.
+
+**Dependencies:** Execute after Task 12 so the Card Library exists, and after Task 14 so the app already has a generated-card acceptance pattern.
+
+**Files:**
+- Create: `apps/web/src/features/cards/contextGeneration.ts`
+- Create: `apps/web/src/features/cards/contextGeneration.test.ts`
+- Create: `apps/web/src/features/cards/ContextCardGenerator.tsx`
+- Create: `apps/web/src/features/cards/ContextCardGenerator.test.tsx`
+- Modify: `apps/web/src/features/cards/CardLibraryPage.tsx`
+- Modify: `apps/web/src/App.tsx`
+- Modify: `apps/web/src/styles.css`
+
+- [ ] **Step 1: Add failing context generation unit test**
+
+Create `apps/web/src/features/cards/contextGeneration.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { buildContextEntryDraft } from "./contextGeneration";
+
+describe("buildContextEntryDraft", () => {
+  it("creates an AI-generated draft from an expression and real-world context", () => {
+    const draft = buildContextEntryDraft({
+      expression: "buff",
+      contextLabel: "game",
+      contextNote: "I saw this word in an RPG item description.",
+      generatedAt: "2026-06-13T00:00:00.000Z",
+    });
+
+    expect(draft.expression).toBe("buff");
+    expect(draft.localMeaning).toBe("a temporary improvement or boost in a game context");
+    expect(draft.modelProvider).toBe("mock");
+    expect(draft.modelName).toBe("context-entry-mock-v1");
+    expect(draft.generationVersion).toBe("context-entry-v1");
+  });
+});
+```
+
+- [ ] **Step 2: Run context generation test and verify it fails**
+
+Run:
+
+```powershell
+corepack pnpm --filter @art/web test -- src/features/cards/contextGeneration.test.ts
+```
+
+Expected: fails because `contextGeneration.ts` does not exist.
+
+- [ ] **Step 3: Implement deterministic context draft builder**
+
+Create `apps/web/src/features/cards/contextGeneration.ts`:
+
+The current local `CandidateExpression` type still requires `articleId` and `segmentId`, so the fixture draft uses `"context-entry"` placeholders. Do not treat these as real article sources. When accepting the draft into an `Occurrence`, mark the occurrence source as context-entry in UI state and later in the backend schema.
+
+```ts
+import type { CandidateExpression } from "@art/domain";
+
+interface ContextEntryDraftInput {
+  expression: string;
+  contextLabel: string;
+  contextNote: string;
+  generatedAt: string;
+}
+
+export function buildContextEntryDraft(input: ContextEntryDraftInput): CandidateExpression {
+  const expression = input.expression.trim();
+  const contextLabel = input.contextLabel.trim() || "real-world context";
+  const contextNote = input.contextNote.trim();
+
+  return {
+    id: `context-draft-${expression.toLowerCase().replaceAll(" ", "-")}`,
+    userId: "user-1",
+    articleId: "context-entry",
+    segmentId: "context-entry",
+    expression,
+    normalizedForm: expression.toLowerCase(),
+    type: "other",
+    meaningZh: meaningFor(expression, contextLabel),
+    localMeaning: localMeaningFor(expression, contextLabel),
+    sentence: exampleFor(expression, contextLabel),
+    sentenceTranslation: translationFor(expression, contextLabel),
+    syntaxHint: contextNote ? `Source context: ${contextNote}` : `Source context: ${contextLabel}`,
+    difficulty: "B1",
+    valueScore: 0.7,
+    candidateStatus: "backup_candidate",
+    statusReason: `Generated from learner-entered ${contextLabel} context.`,
+    occurrenceCount: 1,
+    modelProvider: "mock",
+    modelName: "context-entry-mock-v1",
+    promptVersion: "context-entry-prompt-v1",
+    generationVersion: "context-entry-v1",
+    generatedAt: input.generatedAt,
+  };
+}
+
+function meaningFor(expression: string, contextLabel: string): string {
+  if (expression.toLowerCase() === "buff" && contextLabel.toLowerCase().includes("game")) {
+    return "增益、强化效果";
+  }
+  return "根据场景生成的含义";
+}
+
+function localMeaningFor(expression: string, contextLabel: string): string {
+  if (expression.toLowerCase() === "buff" && contextLabel.toLowerCase().includes("game")) {
+    return "a temporary improvement or boost in a game context";
+  }
+  return `meaning inferred from ${contextLabel} context`;
+}
+
+function exampleFor(expression: string, contextLabel: string): string {
+  if (expression.toLowerCase() === "buff" && contextLabel.toLowerCase().includes("game")) {
+    return "This potion gives your character a short attack buff.";
+  }
+  return `I noticed "${expression}" in a ${contextLabel} context.`;
+}
+
+function translationFor(expression: string, contextLabel: string): string {
+  if (expression.toLowerCase() === "buff" && contextLabel.toLowerCase().includes("game")) {
+    return "这瓶药水会给你的角色一个短暂的攻击增益。";
+  }
+  return `我在${contextLabel}场景中注意到了“${expression}”。`;
+}
+```
+
+- [ ] **Step 4: Add failing component test**
+
+Create `apps/web/src/features/cards/ContextCardGenerator.test.tsx`:
+
+```tsx
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ContextCardGenerator } from "./ContextCardGenerator";
+
+afterEach(() => cleanup());
+
+describe("ContextCardGenerator", () => {
+  it("generates and accepts a card draft from learner-entered context", async () => {
+    const onAccept = vi.fn();
+
+    render(<ContextCardGenerator onAccept={onAccept} />);
+
+    await userEvent.type(screen.getByLabelText("Expression"), "buff");
+    await userEvent.type(screen.getByLabelText("Context"), "game");
+    await userEvent.type(screen.getByLabelText("Where did you see it?"), "RPG item description");
+    await userEvent.click(screen.getByRole("button", { name: "Generate card" }));
+
+    expect(screen.getByText("context-entry-mock-v1")).toBeInTheDocument();
+    expect(screen.getByText("a temporary improvement or boost in a game context")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Add to review" }));
+
+    expect(onAccept).toHaveBeenCalledWith(expect.objectContaining({ expression: "buff" }));
+  });
+});
+```
+
+- [ ] **Step 5: Run component test and verify it fails**
+
+Run:
+
+```powershell
+corepack pnpm --filter @art/web test -- src/features/cards/ContextCardGenerator.test.tsx
+```
+
+Expected: fails because `ContextCardGenerator` does not exist.
+
+- [ ] **Step 6: Implement context-entry generator UI**
+
+Create `apps/web/src/features/cards/ContextCardGenerator.tsx`:
+
+```tsx
+import { useState } from "react";
+import type { CandidateExpression } from "@art/domain";
+import { buildContextEntryDraft } from "./contextGeneration";
+
+interface ContextCardGeneratorProps {
+  onAccept: (draft: CandidateExpression) => void;
+}
+
+export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
+  const [expression, setExpression] = useState("");
+  const [contextLabel, setContextLabel] = useState("");
+  const [contextNote, setContextNote] = useState("");
+  const [draft, setDraft] = useState<CandidateExpression | null>(null);
+
+  function generate() {
+    if (!expression.trim() || !contextLabel.trim()) return;
+    setDraft(buildContextEntryDraft({
+      expression,
+      contextLabel,
+      contextNote,
+      generatedAt: new Date().toISOString(),
+    }));
+  }
+
+  return (
+    <section className="contextGenerator">
+      <h2>Add from context</h2>
+      <label>
+        Expression
+        <input value={expression} onChange={(event) => setExpression(event.target.value)} />
+      </label>
+      <label>
+        Context
+        <input value={contextLabel} onChange={(event) => setContextLabel(event.target.value)} placeholder="game, programming, work" />
+      </label>
+      <label>
+        Where did you see it?
+        <textarea value={contextNote} onChange={(event) => setContextNote(event.target.value)} />
+      </label>
+      <button type="button" onClick={generate}>Generate card</button>
+
+      {draft ? (
+        <article className="generatedDraft">
+          <p>{draft.modelName}</p>
+          <h3>{draft.expression}</h3>
+          <p>{draft.localMeaning}</p>
+          <p>{draft.meaningZh}</p>
+          <p>{draft.sentence}</p>
+          <p>{draft.sentenceTranslation}</p>
+          <button type="button" onClick={() => onAccept(draft)}>Add to review</button>
+        </article>
+      ) : null}
+    </section>
+  );
+}
+```
+
+- [ ] **Step 7: Wire into card library**
+
+Modify `CardLibraryPage.tsx` so the top of the Card Library contains `ContextCardGenerator`. Keep the card list below it.
+
+Modify `App.tsx` so accepting the generated draft creates or activates a fixture `ExpressionSense`, adds a context-entry occurrence, and makes the card visible in Review and Cards.
+
+- [ ] **Step 8: Run tests and build**
+
+Run:
+
+```powershell
+corepack pnpm test:web
+corepack pnpm --filter @art/web build
+```
+
+Expected: tests and build pass.
+
+- [ ] **Step 9: Browser verify**
+
+Open `http://localhost:5173` and go to Cards.
+
+Verify:
+
+- The learner can enter `buff`.
+- The learner can enter `game`.
+- `Generate card` produces an AI-generated mock draft.
+- The draft shows model metadata.
+- Accepting the draft adds it to Cards and Review.
+- The occurrence source is clearly shown as context-entry, not an article segment.
+
+- [ ] **Step 10: Commit**
+
+Run:
+
+```powershell
+git add apps/web
+git commit -m "feat: add context card generation mock"
+```
+
+Expected: commit succeeds.
+
+---
+
+## Task 17: Add Backend Context-Entry AI Contract
+
+**Owner:** Codex local agent
+
+**Reason:** Context-entry card generation is ultimately LLM-backed. The backend owns prompt construction, provider calls, generation metadata, idempotency, duplicate detection, and persistence.
+
+**Dependencies:** Execute after Task 9 and Task 15, because it uses the AI provider boundary and the generated-card draft pattern.
+
+**Files:**
+- Modify: `packages/domain/src/types.ts`
+- Modify: `apps/api/src/ai/provider.ts`
+- Modify: `apps/api/src/ai/mockProvider.ts`
+- Create: `apps/api/src/routes/contextGeneration.ts`
+- Create: `apps/api/src/services/contextGenerationService.ts`
+- Create: `apps/api/src/services/contextGenerationService.test.ts`
+- Modify: `apps/api/src/app.ts`
+- Modify: `apps/api/src/db/schema.sql`
+- Modify: `apps/api/src/db/schema.test.ts`
+
+- [ ] **Step 1: Add context generation types**
+
+Modify `packages/domain/src/types.ts` to add:
+
+```ts
+export interface ContextEntryGenerationRequest {
+  clientOperationId: string;
+  userId: string;
+  expression: string;
+  contextLabel: string;
+  contextNote: string;
+  sentence: string | null;
+  clientCreatedAt: string;
+}
+
+export interface ContextEntryGenerationDraft {
+  candidate: CandidateExpression;
+  duplicateExpressionSenseId: string | null;
+  recommendation: "add" | "merge" | "reject";
+  recommendationReason: string;
+}
+```
+
+- [ ] **Step 2: Add failing service test**
+
+Create `apps/api/src/services/contextGenerationService.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { createMockProvider } from "../ai/mockProvider";
+import { generateContextEntryDraft } from "./contextGenerationService";
+
+describe("generateContextEntryDraft", () => {
+  it("generates a draft with model metadata from expression and context", async () => {
+    const result = await generateContextEntryDraft({
+      provider: createMockProvider(),
+      request: {
+        clientOperationId: "client-op-context-1",
+        userId: "user-1",
+        expression: "buff",
+        contextLabel: "game",
+        contextNote: "RPG item description",
+        sentence: null,
+        clientCreatedAt: "2026-06-13T00:00:00.000Z",
+      },
+    });
+
+    expect(result.candidate.expression).toBe("buff");
+    expect(result.candidate.modelProvider).toBe("mock");
+    expect(result.candidate.generationVersion).toBe("context-entry-v1");
+    expect(result.recommendation).toBe("add");
+  });
+});
+```
+
+- [ ] **Step 3: Run service test and verify it fails**
+
+Run:
+
+```powershell
+corepack pnpm test:api -- src/services/contextGenerationService.test.ts
+```
+
+Expected: fails because the service does not exist.
+
+- [ ] **Step 4: Extend AI provider interface**
+
+Modify `provider.ts` so `AiProvider` supports:
+
+```ts
+generateContextEntryDraft(request: ContextEntryGenerationRequest): Promise<ContextEntryGenerationDraft>;
+```
+
+- [ ] **Step 5: Implement mock provider context generation**
+
+Modify `mockProvider.ts` so expression `buff` with context label `game` returns a deterministic draft with:
+
+- `modelProvider: "mock"`
+- `modelName: "context-entry-mock-v1"`
+- `promptVersion: "context-entry-prompt-v1"`
+- `generationVersion: "context-entry-v1"`
+- `recommendation: "add"`
+
+- [ ] **Step 6: Implement service**
+
+Create `contextGenerationService.ts` as a thin orchestration layer:
+
+- Validates non-empty `expression`.
+- Validates non-empty `contextLabel`.
+- Calls `provider.generateContextEntryDraft`.
+- Preserves `clientOperationId`.
+- Returns one draft.
+
+- [ ] **Step 7: Add API route**
+
+Create `routes/contextGeneration.ts` with:
+
+```text
+POST /cards/context/generate
+```
+
+Request body is `ContextEntryGenerationRequest`. Response body is `ContextEntryGenerationDraft`.
+
+Register the route in `app.ts`.
+
+- [ ] **Step 8: Extend schema**
+
+Modify `schema.sql` so:
+
+- `occurrences.article_id` and `occurrences.segment_id` can represent article sources while context-entry occurrences store `source_type`, `context_label`, and `context_note`.
+- `ai_generation_jobs.source_type` supports `context_entry`.
+- `ai_generation_jobs` stores `context_label`, `context_note`, `client_operation_id`, and model metadata.
+
+Update `schema.test.ts` to assert:
+
+- `context_entry` appears in the schema.
+- `context_label` appears in `occurrences` and `ai_generation_jobs`.
+- `context_note` appears in `occurrences` and `ai_generation_jobs`.
+- `client_operation_id` is present.
+- model metadata fields are present.
+
+- [ ] **Step 9: Run API tests**
+
+Run:
+
+```powershell
+corepack pnpm test:api
+```
+
+Expected: API tests pass.
+
+- [ ] **Step 10: Commit**
+
+Run:
+
+```powershell
+git add packages/domain apps/api
+git commit -m "feat: add context card generation contract"
+```
+
+Expected: commit succeeds.
+
+---
+
 ## Execution Order
 
 1. Task 1: Scaffold Workspace
@@ -2566,14 +3018,16 @@ Expected: commit succeeds.
 6. Task 12: Enrich Review Cards and Add Card Library
 7. Task 13: Add Visible TXT/Markdown Import Entry Point
 8. Task 14: Add Manual Selection AI Card Generation Mock Flow
-9. Task 4: Text Segmentation
-10. Task 5: Fastify API Skeleton
-11. Task 6: PostgreSQL Schema
-12. Task 7: IndexedDB Cache and Operation Queue
-13. Task 8: Sync API Contract
-14. Task 9: AI Provider Boundary
-15. Task 15: Add Backend Manual Selection AI Contract
-16. Task 11: Server Agent Handoff
+9. Task 16: Add Context-Entry AI Card Generation Mock Flow
+10. Task 4: Text Segmentation
+11. Task 5: Fastify API Skeleton
+12. Task 6: PostgreSQL Schema
+13. Task 7: IndexedDB Cache and Operation Queue
+14. Task 8: Sync API Contract
+15. Task 9: AI Provider Boundary
+16. Task 15: Add Backend Manual Selection AI Contract
+17. Task 17: Add Backend Context-Entry AI Contract
+18. Task 11: Server Agent Handoff
 
 This order deliberately puts the visible MVP before backend depth. If the learning interaction feels wrong, frontend behavior can be adjusted before persistence and deployment increase the cost of change.
 
@@ -2588,6 +3042,7 @@ Spec coverage:
 - Card library: covered by Task 12.
 - Visible TXT/Markdown import entry point: covered by Task 13, with real backend import later in Tasks 4 and 5.
 - Manual selection AI card generation: covered locally by Task 14 and on the backend by Task 15.
+- Context-entry AI card generation: covered locally by Task 16 and on the backend by Task 17.
 - Five candidate statuses: covered by Tasks 2, 3, 6, and 9.
 - First-segment priority generation: covered by Task 5.
 - PostgreSQL authority: covered by Task 6.
