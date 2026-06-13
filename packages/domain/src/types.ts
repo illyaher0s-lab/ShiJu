@@ -78,8 +78,11 @@ export interface Occurrence {
   id: string;
   userId: string;
   expressionSenseId: string;
+  sourceType?: "article" | "context_entry";
   articleId: string;
   segmentId: string;
+  contextLabel?: string | null;
+  contextNote?: string | null;
   sentence: string;
   sentenceTranslation: string;
   localMeaning: string;

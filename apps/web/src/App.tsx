@@ -76,7 +76,11 @@ export function App() {
           />
         ) : null}
         {tab === "cards" ? (
-          <CardLibraryPage expressions={reviewState.expressions} occurrences={occurrences} />
+          <CardLibraryPage
+            expressions={reviewState.expressions}
+            occurrences={occurrences}
+            onAddContextDraft={addToReview}
+          />
         ) : null}
         {tab === "articles" ? <ImportPage /> : null}
 
@@ -144,6 +148,9 @@ function ensureOccurrence(occurrences: Occurrence[], candidate: CandidateExpress
       expressionSenseId,
       articleId: candidate.articleId,
       segmentId: candidate.segmentId,
+      sourceType: candidate.articleId === "context-entry" ? "context_entry" : "article",
+      contextLabel: candidate.articleId === "context-entry" ? contextLabelFrom(candidate) : null,
+      contextNote: candidate.articleId === "context-entry" ? contextNoteFrom(candidate) : null,
       sentence: candidate.sentence,
       sentenceTranslation: candidate.sentenceTranslation,
       localMeaning: candidate.localMeaning,
@@ -153,4 +160,13 @@ function ensureOccurrence(occurrences: Occurrence[], candidate: CandidateExpress
       deletedAt: null,
     },
   ];
+}
+
+function contextLabelFrom(candidate: CandidateExpression): string | null {
+  const match = candidate.statusReason.match(/learner-entered (.+) context/i);
+  return match?.[1] ?? null;
+}
+
+function contextNoteFrom(candidate: CandidateExpression): string | null {
+  return candidate.syntaxHint?.replace(/^Source context:\s*/i, "") ?? null;
 }

@@ -1,15 +1,17 @@
-import type { ExpressionSense, Occurrence } from "@art/domain";
+import type { CandidateExpression, ExpressionSense, Occurrence } from "@art/domain";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { isDue, nowIso } from "../../lib/date";
 import { CardDetailSheet } from "./CardDetailSheet";
+import { ContextCardGenerator } from "./ContextCardGenerator";
 
 interface CardLibraryPageProps {
   expressions: ExpressionSense[];
   occurrences: Occurrence[];
+  onAddContextDraft?: (draft: CandidateExpression) => void;
 }
 
-export function CardLibraryPage({ expressions, occurrences }: CardLibraryPageProps) {
+export function CardLibraryPage({ expressions, occurrences, onAddContextDraft }: CardLibraryPageProps) {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const now = nowIso();
@@ -33,6 +35,8 @@ export function CardLibraryPage({ expressions, occurrences }: CardLibraryPagePro
         <p>ExpressionSense</p>
         <h1>Card Library</h1>
       </section>
+
+      {onAddContextDraft ? <ContextCardGenerator onAccept={onAddContextDraft} /> : null}
 
       <label className="searchBox">
         <Search size={16} />

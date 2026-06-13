@@ -392,6 +392,83 @@ dd {
   gap: 16px;
 }
 
+.contextGenerator {
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  background: #ffffff;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.contextGeneratorHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contextGeneratorHeader h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.contextForm {
+  display: grid;
+  gap: 10px;
+}
+
+.contextForm label {
+  display: grid;
+  gap: 6px;
+}
+
+.contextForm span {
+  color: #536174;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.contextForm input,
+.contextForm textarea {
+  width: 100%;
+  border: 1px solid #d7dfeb;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #172033;
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.contextForm textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.contextGenerateButton {
+  min-height: 42px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.generatedDraft {
+  border-top: 1px solid #e2e8f0;
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.generatedDraft h3,
+.generatedDraft p {
+  margin: 0;
+}
+
 .searchBox {
   min-height: 44px;
   border: 1px solid #d7dfeb;

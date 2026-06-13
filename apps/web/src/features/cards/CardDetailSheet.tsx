@@ -46,9 +46,7 @@ export function CardDetailSheet({ expression, occurrences, onClose }: CardDetail
             <article className="occurrenceItem" key={occurrence.id}>
               <p>{occurrence.sentence}</p>
               <p className="translation">{occurrence.sentenceTranslation}</p>
-              <small>
-                Source: {occurrence.articleId}, segment {occurrence.segmentId}
-              </small>
+              <small>{sourceLabel(occurrence)}</small>
             </article>
           ))
         ) : (
@@ -57,4 +55,14 @@ export function CardDetailSheet({ expression, occurrences, onClose }: CardDetail
       </section>
     </aside>
   );
+}
+
+function sourceLabel(occurrence: Occurrence): string {
+  if (occurrence.sourceType === "context_entry" || occurrence.articleId === "context-entry") {
+    const context = occurrence.contextLabel ? ` (${occurrence.contextLabel})` : "";
+    const note = occurrence.contextNote ? ` - ${occurrence.contextNote}` : "";
+    return `Source: Context entry${context}${note}`;
+  }
+
+  return `Source: ${occurrence.articleId}, segment ${occurrence.segmentId}`;
 }

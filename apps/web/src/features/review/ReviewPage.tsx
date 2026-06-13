@@ -80,7 +80,7 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
               </div>
               <div>
                 <dt>Source</dt>
-                <dd>{occurrence ? `Article ${occurrence.articleId}, segment ${occurrence.segmentId}` : "No source"}</dd>
+                <dd>{occurrence ? sourceLabel(occurrence) : "No source"}</dd>
               </div>
               <div>
                 <dt>Difficulty</dt>
@@ -135,4 +135,12 @@ function extraExample(expression: string): string {
   };
 
   return examples[expression] ?? `Try making one new sentence with "${expression}" after you review the original sentence.`;
+}
+
+function sourceLabel(occurrence: Occurrence): string {
+  if (occurrence.sourceType === "context_entry" || occurrence.articleId === "context-entry") {
+    return occurrence.contextLabel ? `Context entry: ${occurrence.contextLabel}` : "Context entry";
+  }
+
+  return `Article ${occurrence.articleId}, segment ${occurrence.segmentId}`;
 }
