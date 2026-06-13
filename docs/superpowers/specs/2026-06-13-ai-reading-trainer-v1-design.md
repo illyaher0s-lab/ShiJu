@@ -24,9 +24,31 @@ The product can also create learning cards from learner-provided context outside
 
 ## V1 User Experience
 
+### Home Dashboard
+
+V1 needs a real home page. The home page is not a marketing landing page; it is the learner's daily control surface.
+
+The home page opens first and shows:
+
+- Today's new expressions learned
+- Today's review cards completed
+- Remaining due review cards
+- Current daily targets
+- Pending local operations that have not synced yet
+- Primary actions to continue reading, review due cards, open cards, or import/paste an article
+
+The learner can set daily learning targets from the home page:
+
+- New cards target for today
+- Review cards target for today
+
+These targets control recommendation and prioritization, not hard blocking. The app can warn when the learner is adding too many new cards, but it should not prevent intentional learning.
+
+The reading page remains the main learning surface, but the home page decides "what should I do today?"
+
 ### Import
 
-The user imports a TXT or Markdown file. The backend stores the original article, splits it into segments, and starts AI generation.
+The user can import a TXT or Markdown file or paste article text directly into the app. The backend stores the original article, splits it into segments, and starts AI generation.
 
 The first segment has high generation priority. Remaining segments are generated in the background.
 
@@ -201,15 +223,35 @@ The card should still preserve active recall. These details appear after the lea
 
 Feedback:
 
-- `known`: advance to the next interval
-- `fuzzy`: schedule a shorter interval
-- `unknown`: return to 1 day or learning queue and increase `mistake_count`
+- `known`: the learner remembered it
+- `fuzzy`: the learner was confused or only partly remembered it
+- `unknown`: the learner did not remember it
 
-Initial V1 interval ladder:
+The UI should present review feedback in learner-facing Chinese with color:
 
-```text
-first review -> 1 day -> 3 days -> 7 days -> 14 days -> 30 days
-```
+- `不知道`: red / negative
+- `迷惑`: amber / uncertain
+- `知道`: green / positive
+
+The learner can long-press `知道` to reveal a `熟知` action. `熟知` marks the `ExpressionSense` as mastered and removes it from the active review queue. It does not delete the card. The card remains visible in the card library and can later be restored to review.
+
+SRS should be upgraded from the initial fixed ladder to an Anki-like SM-2-compatible model. V1 should store enough scheduling state to support:
+
+- Ease factor
+- Interval in days
+- Review repetitions
+- Lapses or mistake count
+- Due date
+- Mastery status
+
+Recommended SM-2-compatible behavior:
+
+- `不知道`: reset repetitions to learning, schedule soon, increment mistakes/lapses, reduce ease.
+- `迷惑`: keep or slightly reduce progress, schedule a shorter interval than `知道`, reduce ease lightly.
+- `知道`: increment repetitions and grow interval using ease factor.
+- `熟知`: set `mastery_status` to `mastered`, clear or ignore due date for normal review queue filtering.
+
+The long-term target can be FSRS, but FSRS needs additional rating history and model parameters. V1 should implement SM-2-compatible scheduling first and keep data fields extensible for FSRS later.
 
 SRS schedules only `ExpressionSense`, never individual sentences.
 
@@ -371,6 +413,9 @@ Important fields:
 - `srs_due_at`
 - `review_count`
 - `mistake_count`
+- `ease_factor`
+- `interval_days`
+- `lapse_count`
 - `created_at`
 - `updated_at`
 - `deleted_at`
@@ -409,8 +454,13 @@ Important fields:
 - `user_id`
 - `expression_sense_id`
 - `feedback`
+- `rating`
 - `previous_due_at`
 - `next_due_at`
+- `previous_ease_factor`
+- `next_ease_factor`
+- `previous_interval_days`
+- `next_interval_days`
 - `reviewed_at`
 - `created_at`
 
@@ -502,6 +552,8 @@ PWA stores in IndexedDB:
 
 When the phone comes back online, it uploads operations with `client_operation_id`. The backend applies operations in `client_created_at` order. This is enough for V1 because the product is single-user first.
 
+The learner should not need to manually sync during normal use. Sync should be automatic when the backend is available. If sync is unavailable, the app should show a small status on the home page or settings area, not on top of the reading or review surface. A manual retry action can exist for troubleshooting, but the primary model is automatic sync.
+
 If the phone is lost or cache is cleared, synchronized data remains safe on the backend. Only unsynced offline operations may be lost.
 
 ## Technical Stack
@@ -538,6 +590,7 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 ## V1 Includes
 
 - TXT and Markdown import
+- Direct pasted article text input
 - Mixed segmentation by heading, paragraph, and 150-250 word target
 - First-segment priority generation
 - Background generation for later segments
@@ -552,8 +605,11 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 - Soft daily new-card recommendation limit of 6
 - PostgreSQL-backed authority data
 - IndexedDB offline cache and pending operation queue
+- Home dashboard with today's learning status and daily card targets
 - Basic review page scheduled by `ExpressionSense`
-- Fixed SRS ladder: 1, 3, 7, 14, 30 days
+- SM-2-compatible SRS scheduling with FSRS-ready data fields
+- Chinese, color-coded review feedback buttons
+- Long-press `知道` to mark an item `熟知` without deleting it from the card library
 - Reading feedback separate from review feedback
 
 ## V1 Excludes
@@ -565,7 +621,7 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 - Course system
 - Knowledge graph
 - Complex synonym merging
-- Complex adaptive SRS algorithm
+- Full FSRS optimization and parameter training
 - Permanent sentence cards
 - Long grammar lessons
 - Multiple generated example sentences per expression
@@ -576,6 +632,7 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 ## Acceptance Criteria
 
 - A TXT or Markdown article can be imported and split into segments.
+- Pasted article text can enter the import flow.
 - The first segment can be generated before the full article is processed.
 - The reading page shows the original segment and 2-4 main highlights by default.
 - No segment shows more than 6 main highlights.
@@ -589,6 +646,10 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 - Context-entry AI generation creates candidates only after backend LLM processing and learner confirmation.
 - Context-entry occurrences are stored as non-article evidence and do not pretend to have article or segment sources.
 - Review-page feedback changes SRS intervals.
+- Review-page buttons are Chinese and visually distinguish `不知道`, `迷惑`, and `知道`.
+- Long-pressing `知道` can reveal `熟知`, which removes the card from the normal review queue while keeping it in the card library.
+- The home page shows today's learning state and allows setting today's new-card and review-card targets.
+- Pending sync status appears on the home page or settings, not as a persistent overlay on reading or review pages.
 - Review cards provide enough post-reveal learning detail to be useful beyond a bare translation.
 - A card library lists `ExpressionSense` records and can open their occurrence evidence.
 - `ExpressionSense` can aggregate multiple `Occurrence` records.

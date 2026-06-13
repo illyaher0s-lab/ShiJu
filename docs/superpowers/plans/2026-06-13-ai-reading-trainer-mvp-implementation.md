@@ -3008,6 +3008,211 @@ Expected: commit succeeds.
 
 ---
 
+## Task 18: Add Home Dashboard and Daily Targets
+
+**Owner:** Codex local agent
+
+**Reason:** The app needs a true learning home page that shows today's progress and lets the learner control daily load. The reading page remains the main learning surface, but the home page answers "what should I do today?"
+
+**Files:**
+- Create: `apps/web/src/features/home/HomePage.tsx`
+- Create: `apps/web/src/features/home/HomePage.test.tsx`
+- Modify: `apps/web/src/App.tsx`
+- Modify: `apps/web/src/styles.css`
+- Modify: `apps/web/src/storage/db.ts` if daily targets need local persistence
+
+- [ ] **Step 1: Add failing home page test**
+
+Test that the app opens to Home first and shows:
+
+- Today's new cards
+- Today's completed reviews
+- Due review count
+- Daily new-card target control
+- Daily review-card target control
+- Pending sync count as a small status, not an overlay
+
+- [ ] **Step 2: Implement Home page**
+
+Create a mobile-first dashboard with compact stats and primary actions:
+
+- Continue reading
+- Review due cards
+- Cards
+- Articles
+
+Keep it utilitarian and learning-focused, not a marketing page.
+
+- [ ] **Step 3: Move pending sync status**
+
+Remove persistent pending-sync status from reading/review surfaces. Show it on Home as a small status line. The learner should not need manual sync during normal use; a retry action can be added later when server sync exists.
+
+- [ ] **Step 4: Run web tests and build**
+
+Run:
+
+```powershell
+corepack pnpm test:web
+corepack pnpm build
+```
+
+- [ ] **Step 5: Commit**
+
+Run:
+
+```powershell
+git add apps/web
+git commit -m "feat: add learning home dashboard"
+```
+
+---
+
+## Task 19: Polish Review Feedback UX and Mastered Action
+
+**Owner:** Codex local agent
+
+**Reason:** Review feedback should match the learner's mental model. The current English labels are too abstract, and the learner needs a way to mark well-known cards as mastered without deleting them.
+
+**Files:**
+- Modify: `packages/domain/src/types.ts`
+- Modify: `apps/web/src/features/review/ReviewPage.tsx`
+- Modify: `apps/web/src/features/review/ReviewPage.test.tsx`
+- Modify: `apps/web/src/features/review/reviewState.ts`
+- Modify: `apps/web/src/styles.css`
+- Modify: `apps/web/src/App.tsx`
+
+- [ ] **Step 1: Add failing review button test**
+
+Test that review buttons render as:
+
+- `不知道`
+- `迷惑`
+- `知道`
+
+and use distinct classes for red, amber, and green styling.
+
+- [ ] **Step 2: Add failing long-press mastered test**
+
+Test that long-pressing `知道` reveals `熟知`, and choosing `熟知` removes the expression from the active review queue while keeping it available in Cards.
+
+- [ ] **Step 3: Extend review feedback/domain action**
+
+Support a mastered action without treating it as deletion. Recommended model:
+
+- Keep `ReviewFeedback = "known" | "fuzzy" | "unknown"` for ordinary SRS ratings.
+- Add a separate action or operation type for `review.mark_mastered`.
+- Set `masteryStatus: "mastered"` and remove the item from active review IDs.
+
+- [ ] **Step 4: Implement UI styling**
+
+Style buttons:
+
+- `不知道`: red
+- `迷惑`: amber
+- `知道`: green
+- `熟知`: quiet positive secondary action shown only after long press
+
+- [ ] **Step 5: Run tests and build**
+
+Run:
+
+```powershell
+corepack pnpm test:web
+corepack pnpm build
+```
+
+- [ ] **Step 6: Commit**
+
+Run:
+
+```powershell
+git add packages/domain apps/web
+git commit -m "feat: polish review feedback and mastered action"
+```
+
+---
+
+## Task 20: Upgrade SRS to SM-2-Compatible Scheduling
+
+**Owner:** Codex local agent
+
+**Reason:** The initial fixed ladder was only enough to validate the loop. The product should move toward Anki-like scheduling while keeping room for FSRS later.
+
+**Files:**
+- Modify: `packages/domain/src/types.ts`
+- Modify: `packages/domain/src/srs.ts`
+- Modify: `packages/domain/src/srs.test.ts`
+- Modify: `apps/api/src/db/schema.sql`
+- Modify: `apps/api/src/db/schema.test.ts`
+- Modify: `apps/web/src/fixtures/sampleSegment.ts`
+- Modify: any web tests that construct `ExpressionSense`
+
+- [ ] **Step 1: Add failing SM-2 tests**
+
+Cover:
+
+- `known` increases repetitions and grows interval using ease factor.
+- `fuzzy` schedules earlier than `known` and slightly reduces ease.
+- `unknown` resets repetitions, increments mistake/lapse count, and schedules soon.
+- `mastered` items are excluded from normal due review filtering.
+
+- [ ] **Step 2: Extend scheduling fields**
+
+Add to `ExpressionSense`:
+
+- `easeFactor`
+- `intervalDays`
+- `lapseCount`
+
+Add corresponding database columns:
+
+- `ease_factor`
+- `interval_days`
+- `lapse_count`
+
+Review logs should preserve enough before/after state to debug scheduling:
+
+- previous/next due date
+- previous/next ease factor
+- previous/next interval days
+- feedback/rating
+
+- [ ] **Step 3: Implement SM-2-compatible transitions**
+
+Recommended defaults:
+
+- Initial ease factor: `2.5`
+- Minimum ease factor: `1.3`
+- `known`: quality 4 or 5 equivalent, interval grows by ease after early reviews.
+- `fuzzy`: quality 3 equivalent, shorter interval and small ease reduction.
+- `unknown`: quality 1 or 2 equivalent, reset repetitions and schedule soon.
+
+Do not implement full FSRS training in this task.
+
+- [ ] **Step 4: Wire review state**
+
+Ensure only review page feedback changes SM-2 scheduling. Reading feedback remains triage only.
+
+- [ ] **Step 5: Run tests and build**
+
+Run:
+
+```powershell
+corepack pnpm test
+corepack pnpm build
+```
+
+- [ ] **Step 6: Commit**
+
+Run:
+
+```powershell
+git add packages/domain apps/api apps/web
+git commit -m "feat: upgrade srs scheduling"
+```
+
+---
+
 ## Execution Order
 
 1. Task 1: Scaffold Workspace
@@ -3028,6 +3233,9 @@ Expected: commit succeeds.
 16. Task 15: Add Backend Manual Selection AI Contract
 17. Task 17: Add Backend Context-Entry AI Contract
 18. Task 11: Server Agent Handoff
+19. Task 18: Home Dashboard and Daily Targets
+20. Task 19: Review Feedback UX and Mastered Action
+21. Task 20: SM-2-Compatible SRS Scheduling
 
 This order deliberately puts the visible MVP before backend depth. If the learning interaction feels wrong, frontend behavior can be adjusted before persistence and deployment increase the cost of change.
 
@@ -3049,9 +3257,13 @@ Spec coverage:
 - IndexedDB offline queue and idempotent operations: covered by Tasks 7 and 8.
 - AI generation metadata and versioning: covered by Tasks 6 and 9.
 - Server deployment split: covered by Task 11.
+- Home dashboard and daily targets: covered by Task 18.
+- Chinese review feedback, colors, and mastered action: covered by Task 19.
+- SM-2-compatible scheduling and FSRS-ready fields: covered by Task 20.
 
 Known intentional deferrals:
 
 - Native mobile app is excluded by the spec.
 - PDF and webpage import are excluded by the spec.
 - Real AI calls are behind the provider boundary and disabled by default for local MVP verification.
+- Full FSRS optimization is deferred until enough review history exists.
