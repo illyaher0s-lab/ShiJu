@@ -45,7 +45,7 @@ export function applyReviewFeedback(
 function intervalForFeedback(feedback: ReviewFeedback, currentStep: number): number {
   if (feedback === "unknown") return 1;
   if (feedback === "fuzzy") return currentStep <= 1 ? 1 : 3;
-  return intervalsInDays[Math.min(currentStep, intervalsInDays.length - 1)];
+  return intervalsInDays[Math.min(currentStep, intervalsInDays.length - 1)]!;
 }
 
 function masteryFor(reviewCount: number, feedback: ReviewFeedback): ExpressionSense["masteryStatus"] {

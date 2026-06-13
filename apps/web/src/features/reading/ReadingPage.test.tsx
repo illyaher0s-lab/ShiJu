@@ -1,9 +1,13 @@
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { sampleCandidates, sampleSegment } from "../../fixtures/sampleSegment";
 import { ReadingPage } from "./ReadingPage";
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("ReadingPage", () => {
   it("shows selected highlights and hides more expressions until expanded", async () => {

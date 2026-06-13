@@ -4,14 +4,14 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev:web": "pnpm --filter @art/web dev",
-    "dev:api": "pnpm --filter @art/api dev",
-    "test": "pnpm -r test",
-    "test:web": "pnpm --filter @art/web test",
-    "test:api": "pnpm --filter @art/api test",
-    "test:domain": "pnpm --filter @art/domain test",
-    "build": "pnpm -r build",
-    "lint": "pnpm -r lint"
+    "dev:web": "corepack pnpm --filter @art/web dev",
+    "dev:api": "corepack pnpm --filter @art/api dev",
+    "test": "corepack pnpm -r test",
+    "test:web": "corepack pnpm --filter @art/web test",
+    "test:api": "corepack pnpm --filter @art/api test",
+    "test:domain": "corepack pnpm --filter @art/domain test",
+    "build": "corepack pnpm -r build",
+    "lint": "corepack pnpm -r lint"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
