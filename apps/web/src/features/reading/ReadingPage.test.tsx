@@ -70,4 +70,44 @@ describe("ReadingPage", () => {
     expect(onAddToReview).toHaveBeenCalledWith(expect.objectContaining({ expression: "all at once" }));
     selectionSpy.mockRestore();
   });
+
+  it("detects learner text selection when the mouse is released outside the passage", async () => {
+    render(
+      <ReadingPage
+        segment={sampleSegment}
+        candidates={sampleCandidates}
+        onAddToReview={vi.fn()}
+        onReadingFeedback={vi.fn()}
+      />,
+    );
+
+    const article = screen.getByLabelText("Original reading segment");
+    const selectedNode = findTextNode(article, "all at once");
+    const selectionSpy = vi.spyOn(window, "getSelection").mockReturnValue({
+      anchorNode: selectedNode,
+      focusNode: selectedNode,
+      toString: () => "all at once",
+    } as Selection);
+
+    fireEvent.mouseUp(document);
+
+    expect(await screen.findByRole("button", { name: "Generate card" })).toBeInTheDocument();
+    selectionSpy.mockRestore();
+  });
 });
+
+function findTextNode(root: Node, text: string): Node {
+  if (root.nodeType === Node.TEXT_NODE && root.textContent?.includes(text)) {
+    return root;
+  }
+
+  for (const child of Array.from(root.childNodes)) {
+    try {
+      return findTextNode(child, text);
+    } catch {
+      // Keep searching siblings.
+    }
+  }
+
+  throw new Error(`Could not find text node containing ${text}`);
+}

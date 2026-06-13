@@ -1,6 +1,6 @@
 import { appearsInMoreExpressions, type CandidateExpression, type ReadingFeedback, type Segment } from "@art/domain";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { renderHighlightedText } from "../../lib/highlightText";
 import { ExpressionSheet } from "./ExpressionSheet";
 import { GeneratedCardDraftSheet } from "./GeneratedCardDraftSheet";
@@ -15,6 +15,7 @@ interface ReadingPageProps {
 }
 
 export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedback }: ReadingPageProps) {
+  const passageRef = useRef<HTMLElement | null>(null);
   const [selected, setSelected] = useState<CandidateExpression | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [selectedText, setSelectedText] = useState<string | null>(null);
@@ -25,7 +26,28 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
   );
   const moreCandidates = candidates.filter((candidate) => appearsInMoreExpressions(candidate.candidateStatus));
 
-  function captureManualSelection() {
+  useEffect(() => {
+    function captureManualSelection() {
+      window.setTimeout(() => {
+        const selection = window.getSelection();
+        const text = selection?.toString().trim() ?? "";
+        if (!selection || !text || !selectionBelongsToPassage(selection, passageRef.current)) return;
+        setSelectedText(text);
+      }, 0);
+    }
+
+    document.addEventListener("selectionchange", captureManualSelection);
+    document.addEventListener("mouseup", captureManualSelection);
+    document.addEventListener("touchend", captureManualSelection);
+
+    return () => {
+      document.removeEventListener("selectionchange", captureManualSelection);
+      document.removeEventListener("mouseup", captureManualSelection);
+      document.removeEventListener("touchend", captureManualSelection);
+    };
+  }, []);
+
+  function captureManualSelectionFromPassage() {
     const selection = window.getSelection();
     const text = selection?.toString().trim() ?? "";
     if (!text) return;
@@ -59,10 +81,11 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
       </section>
 
       <article
+        ref={passageRef}
         className="passage"
         aria-label="Original reading segment"
-        onMouseUp={captureManualSelection}
-        onTouchEnd={captureManualSelection}
+        onMouseUp={captureManualSelectionFromPassage}
+        onTouchEnd={captureManualSelectionFromPassage}
       >
         {renderHighlightedText({
           text: segment.text,
@@ -120,4 +143,15 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
 function sentenceContaining(text: string, selectedText: string): string {
   const sentences = text.match(/[^.!?]+[.!?]/g) ?? [text];
   return sentences.find((sentence) => sentence.includes(selectedText))?.trim() ?? selectedText;
+}
+
+function selectionBelongsToPassage(selection: Selection, passage: HTMLElement | null): boolean {
+  if (!passage) return false;
+  return nodeIsInside(selection.anchorNode, passage) || nodeIsInside(selection.focusNode, passage);
+}
+
+function nodeIsInside(node: Node | null, passage: HTMLElement): boolean {
+  if (!node) return false;
+  const target = node.nodeType === Node.TEXT_NODE ? node.parentNode : node;
+  return target ? passage.contains(target) : false;
 }

@@ -71,8 +71,12 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
                 <dd>{occurrence?.sentenceTranslation ?? "No translation saved yet."}</dd>
               </div>
               <div>
-                <dt>Usage hint</dt>
-                <dd>{occurrence?.syntaxHint ?? "Focus on how the expression works in the sentence."}</dd>
+                <dt>Sentence clue</dt>
+                <dd>{sentenceClue(current.expression, occurrence?.syntaxHint ?? undefined)}</dd>
+              </div>
+              <div>
+                <dt>Another example</dt>
+                <dd>{extraExample(current.expression)}</dd>
               </div>
               <div>
                 <dt>Source</dt>
@@ -109,4 +113,26 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
       </section>
     </main>
   );
+}
+
+function sentenceClue(expression: string, syntaxHint?: string): string {
+  const clues: Record<string, string> = {
+    "roll out": "Here it means the city started making the program available.",
+    "pick up steam": "Here it means the habit gradually became stronger.",
+    "all at once": "Here it means everything happened in one sudden moment.",
+    "keep pace with": "Here it means learners could continue reading without falling behind.",
+  };
+
+  return clues[expression] ?? syntaxHint ?? "Notice how this expression works inside the saved sentence.";
+}
+
+function extraExample(expression: string): string {
+  const examples: Record<string, string> = {
+    "roll out": "The school will roll out the new reading app next week. / 学校下周会推出新的阅读应用。",
+    "pick up steam": "After a slow start, the study group began to pick up steam. / 慢热之后，学习小组开始有起色。",
+    "all at once": "The answer did not come all at once. / 答案不是一下子就冒出来的。",
+    "keep pace with": "Short notes helped her keep pace with the article. / 简短笔记帮助她跟上文章节奏。",
+  };
+
+  return examples[expression] ?? `Try making one new sentence with "${expression}" after you review the original sentence.`;
 }
