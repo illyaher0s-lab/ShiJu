@@ -1,9 +1,28 @@
 import type { CandidateExpression, Segment } from "@art/domain";
+import { createMockProvider } from "../ai/mockProvider";
+import { createOpenAiCompatibleProvider } from "../ai/openAiCompatibleProvider";
 import type { AiProvider } from "../ai/provider";
+import { loadConfig, type ApiConfig } from "../config";
 
 export interface SegmentGenerationResult {
   segments: Segment[];
   candidates: CandidateExpression[];
+}
+
+export function createGenerationProvider(config: ApiConfig = loadConfig()): AiProvider {
+  if (config.aiProvider === "openai_compatible") {
+    if (!config.aiBaseUrl || !config.aiApiKey || !config.aiModel) {
+      throw new Error("OpenAI-compatible provider requires AI_BASE_URL, AI_API_KEY, and AI_MODEL.");
+    }
+
+    return createOpenAiCompatibleProvider({
+      baseUrl: config.aiBaseUrl,
+      apiKey: config.aiApiKey,
+      model: config.aiModel,
+    });
+  }
+
+  return createMockProvider();
 }
 
 export async function generateFirstSegment(options: {

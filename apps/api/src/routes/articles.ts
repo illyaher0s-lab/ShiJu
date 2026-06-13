@@ -1,8 +1,7 @@
 import { segmentArticleText, type Article, type Segment } from "@art/domain";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { createMockProvider } from "../ai/mockProvider";
-import { generateFirstSegment } from "../services/generationService";
+import { createGenerationProvider, generateFirstSegment } from "../services/generationService";
 
 const importArticleSchema = z.object({
   title: z.string().min(1),
@@ -40,7 +39,7 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       deletedAt: null,
     }));
     const generated = await generateFirstSegment({
-      provider: createMockProvider(),
+      provider: createGenerationProvider(),
       segments,
     });
 
