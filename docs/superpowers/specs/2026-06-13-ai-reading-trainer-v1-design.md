@@ -93,6 +93,46 @@ This area includes two categories:
 
 These expressions can still be opened and manually added to review.
 
+### Manual Selection AI Card Generation
+
+The learner is not limited to expressions preselected by AI. While reading, the learner can select a word, phrase, clause, or short sentence span from the original passage and request AI card generation.
+
+This is not manual card entry. The learner provides the selected text and intent signal; the backend calls the LLM to produce one or more card candidates.
+
+The generation request should include:
+
+- Selected text
+- Full sentence containing the selection
+- Nearby segment context
+- Article and segment IDs
+- Existing candidate expressions in the segment
+- Existing active `ExpressionSense` records that may duplicate the selection
+
+The LLM response should produce candidate `ExpressionSense` drafts, not permanent sentence cards. For each draft, the system should provide:
+
+- Suggested expression
+- Normalized form
+- Type
+- Local meaning in the current sentence
+- Chinese explanation
+- Sentence translation
+- Difficulty
+- Minimal syntax hint when useful
+- Duplicate or near-duplicate warning when applicable
+- Recommendation: add, merge with existing sense, or reject as unsuitable
+
+The learner must confirm before a generated draft enters SRS. Confirmation creates or activates an `ExpressionSense` and stores the selected sentence as an `Occurrence`.
+
+Manual selection generation must preserve generation metadata:
+
+- `model_provider`
+- `model_name`
+- `prompt_version`
+- `generation_version`
+- `generated_at`
+
+If offline, the selection request can be stored as a pending client operation with a `client_operation_id`, but LLM generation itself runs only when network and backend are available.
+
 ### Review Page
 
 The review page is the formal active recall surface. Only review-page feedback changes SRS intervals.
@@ -102,6 +142,20 @@ Card display depends on mastery:
 - New review item: expression plus a clear occurrence sentence.
 - Learning item: expression plus sentence prompt or cloze sentence.
 - Mastered item: expression with minimal context first; context can be expanded after recall.
+
+Review cards must be rich enough to support learning, not just reveal a Chinese translation. A V1 card can include a compact recall prompt first and then an answer surface with:
+
+- Meaning in Chinese
+- Local meaning in the original sentence
+- Original occurrence sentence
+- Sentence translation
+- Minimal syntax or usage hint
+- Expression type and difficulty
+- Source article title and segment position
+- Other saved occurrences for the same `ExpressionSense` when available
+- Mistake count and review count when useful
+
+The card should still preserve active recall. These details appear after the learner chooses to reveal the answer, or inside an expandable details section after recall.
 
 Feedback:
 
@@ -116,6 +170,38 @@ first review -> 1 day -> 3 days -> 7 days -> 14 days -> 30 days
 ```
 
 SRS schedules only `ExpressionSense`, never individual sentences.
+
+### Card Library
+
+V1 needs both an article library and a card library.
+
+The article library helps the learner return to imported texts and generated segments. The card library helps the learner manage long-term learning objects.
+
+The card library should list `ExpressionSense` records, not raw sentence cards. It should support:
+
+- Searching by expression or Chinese meaning
+- Filtering by mastery status
+- Filtering by due status
+- Opening a card detail page
+- Viewing all `Occurrence` evidence for a sense
+- Jumping from an occurrence back to the source article segment
+- Seeing whether a sense came from AI preselection, More expressions, or manual selection AI generation
+
+The card library must make sense separation visible enough that the same expression string with different meanings can appear as different cards.
+
+### Import and Library Entry Points
+
+TXT and Markdown import are V1 requirements. The fixture-driven MVP can use a static library screen, but production V1 needs a visible import entry point where the learner can add a TXT or Markdown article.
+
+The import entry point should show the import state after upload:
+
+- Stored article
+- Segment count
+- First-segment generation state
+- Background generation state for later segments
+- Retry action for failed or retryable segments
+
+The import flow should lead back to the reading page as soon as the first segment is generated.
 
 ## AI Generation
 
@@ -299,6 +385,40 @@ Important fields:
 
 The backend must use `client_operation_id` for idempotency so repeated uploads do not apply an action twice.
 
+Manual selection AI generation should use client operations for idempotency. A repeated upload of the same selection request must not create duplicate senses or duplicate generation jobs.
+
+Recommended operation types include:
+
+- `reading.add_to_review`
+- `reading.feedback`
+- `reading.generate_card_from_selection`
+- `review.feedback`
+
+### AiGenerationJob
+
+V1 can start with an in-process queue, but the domain should treat generation as a job so article preselection and manual selection generation share a consistent model.
+
+Important fields:
+
+- `id`
+- `user_id`
+- `article_id`
+- `segment_id`
+- `source_type`: `segment_preselection` or `manual_selection`
+- `selected_text`
+- `sentence`
+- `context`
+- `status`
+- `client_operation_id`
+- `model_provider`
+- `model_name`
+- `prompt_version`
+- `generation_version`
+- `generated_at`
+- `created_at`
+- `updated_at`
+- `deleted_at`
+
 ## Daily Load Control
 
 Default recommended new review items per day: 6.
@@ -375,7 +495,9 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 - Reading page with original text and limited main highlights
 - Lightweight highlight popover with optional full expansion
 - More expressions section for `backup_candidate` and `ignored_over_limit`
+- Manual selection AI card generation from learner-selected text
 - ExpressionSense / Occurrence separation
+- Card library for `ExpressionSense` records and occurrences
 - Soft daily new-card recommendation limit of 6
 - PostgreSQL-backed authority data
 - IndexedDB offline cache and pending operation queue
@@ -409,7 +531,11 @@ The project should not use Next.js for V1. The product does not need SEO or serv
 - The user can expand to full explanation.
 - Reading-page `known` does not advance SRS.
 - Reading-page `add_to_review` creates or activates SRS for the related `ExpressionSense`.
+- Selecting text in the reading page can request AI-generated card candidates.
+- Manual selection AI generation creates candidates only after backend LLM processing and learner confirmation.
 - Review-page feedback changes SRS intervals.
+- Review cards provide enough post-reveal learning detail to be useful beyond a bare translation.
+- A card library lists `ExpressionSense` records and can open their occurrence evidence.
 - `ExpressionSense` can aggregate multiple `Occurrence` records.
 - Same expression string with different meanings can become different `ExpressionSense` records.
 - `backup_candidate` and `ignored_over_limit` appear only in "More expressions" by default.

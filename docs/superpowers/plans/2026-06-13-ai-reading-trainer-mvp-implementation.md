@@ -67,6 +67,13 @@ MVP includes:
 - SRS interval changes only from review feedback.
 - Mobile-width layout that can be viewed on desktop.
 
+After the first local MVP review, the next visible milestone must address learning depth and learner agency before cloud deployment:
+
+- Richer review cards that are useful after recall, not just expression plus Chinese meaning.
+- A card library for `ExpressionSense` records, separate from article/library import views.
+- Manual selection AI card generation, where the learner selects text and the system calls the LLM to generate card candidates.
+- A visible TXT/Markdown import entry point.
+
 MVP excludes:
 
 - Real file import.
@@ -1934,6 +1941,621 @@ Expected: commit succeeds.
 
 ---
 
+## Task 12: Enrich Review Cards and Add Card Library
+
+**Owner:** Codex local agent
+
+**Reason:** First MVP review showed that review cards are too thin for a learning-first product. The app also needs a card library, not only an article/library placeholder.
+
+**Files:**
+- Modify: `apps/web/src/fixtures/sampleSegment.ts`
+- Modify: `apps/web/src/App.tsx`
+- Modify: `apps/web/src/styles.css`
+- Modify: `apps/web/src/features/review/ReviewPage.tsx`
+- Create: `apps/web/src/features/cards/CardLibraryPage.tsx`
+- Create: `apps/web/src/features/cards/CardDetailSheet.tsx`
+- Create: `apps/web/src/features/cards/CardLibraryPage.test.tsx`
+- Modify: `apps/web/src/features/review/ReviewPage.test.tsx`
+
+- [ ] **Step 1: Add failing review card behavior test**
+
+Create or update `apps/web/src/features/review/ReviewPage.test.tsx`:
+
+```tsx
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { sampleExpressionSenses, sampleOccurrences } from "../../fixtures/sampleSegment";
+import { ReviewPage } from "./ReviewPage";
+
+afterEach(() => cleanup());
+
+describe("ReviewPage", () => {
+  it("keeps learning details hidden until answer reveal", async () => {
+    render(
+      <ReviewPage
+        expressions={sampleExpressionSenses}
+        occurrences={sampleOccurrences}
+        activeReviewIds={["sense-roll-out"]}
+        onReview={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "roll out" })).toBeInTheDocument();
+    expect(screen.queryByText("Local meaning")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Show answer" }));
+
+    expect(screen.getByText("Local meaning")).toBeInTheDocument();
+    expect(screen.getByText("Original sentence")).toBeInTheDocument();
+    expect(screen.getByText("Usage hint")).toBeInTheDocument();
+    expect(screen.getByText("Source")).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 2: Run review test and verify it fails**
+
+Run:
+
+```powershell
+corepack pnpm --filter @art/web test -- src/features/review/ReviewPage.test.tsx
+```
+
+Expected: fails because rich answer labels are not rendered yet.
+
+- [ ] **Step 3: Implement richer review answer surface**
+
+Modify `ReviewPage.tsx` so the hidden answer reveals:
+
+- Chinese meaning
+- Local meaning
+- Original sentence
+- Sentence translation
+- Syntax or usage hint
+- Type and difficulty
+- Source segment
+- Review count and mistake count
+
+Keep the recall prompt compact before the answer is revealed.
+
+- [ ] **Step 4: Add failing card library test**
+
+Create `apps/web/src/features/cards/CardLibraryPage.test.tsx`:
+
+```tsx
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it } from "vitest";
+import { sampleExpressionSenses, sampleOccurrences } from "../../fixtures/sampleSegment";
+import { CardLibraryPage } from "./CardLibraryPage";
+
+afterEach(() => cleanup());
+
+describe("CardLibraryPage", () => {
+  it("lists expression sense cards and opens occurrence evidence", async () => {
+    render(
+      <CardLibraryPage
+        expressions={sampleExpressionSenses}
+        occurrences={sampleOccurrences}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Card Library" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /roll out/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /roll out/i }));
+
+    expect(screen.getByText("Occurrence evidence")).toBeInTheDocument();
+    expect(screen.getByText(/When the city began to roll out/i)).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 5: Run card library test and verify it fails**
+
+Run:
+
+```powershell
+corepack pnpm --filter @art/web test -- src/features/cards/CardLibraryPage.test.tsx
+```
+
+Expected: fails because `CardLibraryPage` does not exist.
+
+- [ ] **Step 6: Implement card library UI**
+
+Create:
+
+- `CardLibraryPage.tsx`: lists `ExpressionSense` cards with type, meaning, mastery, due state, review count.
+- `CardDetailSheet.tsx`: shows all matching `Occurrence` evidence and source segment/article context.
+
+The page must list `ExpressionSense`, not sentence cards.
+
+- [ ] **Step 7: Wire app navigation**
+
+Modify `App.tsx` so the bottom navigation has four tabs:
+
+- Read
+- Review
+- Cards
+- Articles
+
+The current static `Library` page becomes the article/import area.
+
+- [ ] **Step 8: Run web tests and build**
+
+Run:
+
+```powershell
+corepack pnpm test:web
+corepack pnpm --filter @art/web build
+```
+
+Expected: tests and build pass.
+
+- [ ] **Step 9: Browser verify**
+
+Open `http://localhost:5173`.
+
+Verify:
+
+- Review answer reveal is richer than translation only.
+- Card Library lists expression cards.
+- Card detail shows occurrence evidence.
+- Article library/import area remains separate from card library.
+
+- [ ] **Step 10: Commit**
+
+Run:
+
+```powershell
+git add apps/web
+git commit -m "feat: enrich review cards and add card library"
+```
+
+Expected: commit succeeds.
+
+---
+
+## Task 13: Add Visible TXT/Markdown Import Entry Point
+
+**Owner:** Codex local agent
+
+**Reason:** TXT/Markdown import is a V1 requirement. The current MVP has only a static fixture library screen.
+
+**Files:**
+- Modify: `apps/web/src/features/import/ImportPage.tsx`
+- Create: `apps/web/src/features/import/ImportPage.test.tsx`
+- Modify: `apps/web/src/styles.css`
+
+- [ ] **Step 1: Add failing import UI test**
+
+Create `apps/web/src/features/import/ImportPage.test.tsx`:
+
+```tsx
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { ImportPage } from "./ImportPage";
+
+afterEach(() => cleanup());
+
+describe("ImportPage", () => {
+  it("shows a TXT or Markdown import entry point", () => {
+    render(<ImportPage />);
+
+    expect(screen.getByRole("heading", { name: "Articles" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Import TXT or Markdown article")).toBeInTheDocument();
+    expect(screen.getByText("First segment starts first")).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 2: Run import test and verify it fails**
+
+Run:
+
+```powershell
+corepack pnpm --filter @art/web test -- src/features/import/ImportPage.test.tsx
+```
+
+Expected: fails because the import input is not present.
+
+- [ ] **Step 3: Implement fixture-mode import UI**
+
+Modify `ImportPage.tsx` to show:
+
+- File input accepting `.txt`, `.md`, `.markdown`, and `text/plain`
+- Import state copy for fixture mode
+- Segment generation states: first segment generated, later segments preparing
+- Existing sample article row
+
+This task does not parse real files yet. It makes the V1 import affordance visible before backend import exists.
+
+- [ ] **Step 4: Run tests and build**
+
+Run:
+
+```powershell
+corepack pnpm test:web
+corepack pnpm --filter @art/web build
+```
+
+Expected: tests and build pass.
+
+- [ ] **Step 5: Browser verify**
+
+Open `http://localhost:5173` and go to Articles.
+
+Verify:
+
+- There is a visible TXT/Markdown import control.
+- It is clear that first segment generation is prioritized.
+- The static sample article is still available.
+
+- [ ] **Step 6: Commit**
+
+Run:
+
+```powershell
+git add apps/web/src/features/import apps/web/src/styles.css
+git commit -m "feat: add article import entry point"
+```
+
+Expected: commit succeeds.
+
+---
+
+## Task 14: Add Manual Selection AI Card Generation Mock Flow
+
+**Owner:** Codex local agent
+
+**Reason:** Learners need agency when AI did not highlight a word or phrase they personally need. The learner selects text; the system generates card candidates via AI. Local MVP starts with deterministic mock generation.
+
+**Files:**
+- Modify: `apps/web/src/features/reading/ReadingPage.tsx`
+- Create: `apps/web/src/features/reading/SelectionToolbar.tsx`
+- Create: `apps/web/src/features/reading/GeneratedCardDraftSheet.tsx`
+- Create: `apps/web/src/features/reading/manualSelection.ts`
+- Create: `apps/web/src/features/reading/manualSelection.test.ts`
+- Modify: `apps/web/src/fixtures/sampleSegment.ts`
+- Modify: `apps/web/src/App.tsx`
+- Modify: `apps/web/src/styles.css`
+
+- [ ] **Step 1: Add failing manual selection unit test**
+
+Create `apps/web/src/features/reading/manualSelection.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { buildManualSelectionDraft } from "./manualSelection";
+
+describe("buildManualSelectionDraft", () => {
+  it("creates an AI-generated draft from selected text and sentence context", () => {
+    const draft = buildManualSelectionDraft({
+      selectedText: "all at once",
+      sentence: "Teachers noticed that momentum did not arrive all at once.",
+      articleId: "article-sample",
+      segmentId: "segment-1",
+      generatedAt: "2026-06-13T00:00:00.000Z",
+    });
+
+    expect(draft.expression).toBe("all at once");
+    expect(draft.localMeaning).toBe("suddenly or together in this sentence");
+    expect(draft.modelProvider).toBe("mock");
+    expect(draft.generationVersion).toBe("manual-selection-v1");
+  });
+});
+```
+
+- [ ] **Step 2: Run manual selection test and verify it fails**
+
+Run:
+
+```powershell
+corepack pnpm --filter @art/web test -- src/features/reading/manualSelection.test.ts
+```
+
+Expected: fails because `manualSelection.ts` does not exist.
+
+- [ ] **Step 3: Implement deterministic local draft builder**
+
+Create `manualSelection.ts` with a pure function that returns a `CandidateExpression` draft using:
+
+- `candidateStatus: "backup_candidate"`
+- `modelProvider: "mock"`
+- `modelName: "manual-selection-mock-v1"`
+- `promptVersion: "manual-selection-prompt-v1"`
+- `generationVersion: "manual-selection-v1"`
+
+This is a local stand-in for the future backend LLM call.
+
+- [ ] **Step 4: Add failing selection toolbar and draft sheet tests**
+
+Create `apps/web/src/features/reading/SelectionToolbar.test.tsx`:
+
+```tsx
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SelectionToolbar } from "./SelectionToolbar";
+
+afterEach(() => cleanup());
+
+describe("SelectionToolbar", () => {
+  it("requests card generation for selected text", async () => {
+    const onGenerate = vi.fn();
+
+    render(<SelectionToolbar selectedText="all at once" onGenerate={onGenerate} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Generate card" }));
+
+    expect(onGenerate).toHaveBeenCalledWith("all at once");
+  });
+});
+```
+
+Create `apps/web/src/features/reading/GeneratedCardDraftSheet.test.tsx`:
+
+```tsx
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildManualSelectionDraft } from "./manualSelection";
+import { GeneratedCardDraftSheet } from "./GeneratedCardDraftSheet";
+
+afterEach(() => cleanup());
+
+describe("GeneratedCardDraftSheet", () => {
+  it("shows generated metadata and allows accepting the draft", async () => {
+    const draft = buildManualSelectionDraft({
+      selectedText: "all at once",
+      sentence: "Teachers noticed that momentum did not arrive all at once.",
+      articleId: "article-sample",
+      segmentId: "segment-1",
+      generatedAt: "2026-06-13T00:00:00.000Z",
+    });
+    const onAccept = vi.fn();
+
+    render(<GeneratedCardDraftSheet draft={draft} onAccept={onAccept} onDismiss={vi.fn()} />);
+
+    expect(screen.getByText("manual-selection-mock-v1")).toBeInTheDocument();
+    expect(screen.getByText("manual-selection-v1")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Add to review" }));
+
+    expect(onAccept).toHaveBeenCalledWith(draft);
+  });
+});
+```
+
+These component tests cover the selection-generation UI contract. `ReadingPage` still needs browser verification for native text selection because jsdom selection APIs are not reliable enough for the full gesture.
+
+- [ ] **Step 5: Run selection UI tests and verify they fail**
+
+Run:
+
+```powershell
+corepack pnpm --filter @art/web test -- src/features/reading/SelectionToolbar.test.tsx src/features/reading/GeneratedCardDraftSheet.test.tsx
+```
+
+Expected: fails because the components do not exist.
+
+- [ ] **Step 6: Implement selection toolbar and draft sheet**
+
+Create:
+
+- `SelectionToolbar.tsx`: receives selected text and has a `Generate card` button.
+- `GeneratedCardDraftSheet.tsx`: shows generated expression, type, local meaning, Chinese explanation, sentence, generation metadata, and actions `Add to review` / `Dismiss`.
+
+Modify `ReadingPage.tsx` to listen for text selection inside the passage and show the toolbar near the lower edge of the reading area.
+
+- [ ] **Step 7: Wire draft acceptance**
+
+Modify `App.tsx` so accepting a generated draft creates or activates a fixture `ExpressionSense` and adds it to review. In the mock MVP, support at least `all at once` as a deterministic generated card.
+
+- [ ] **Step 8: Add browser-verifiable reading selection behavior**
+
+Modify `ReadingPage.tsx` so that when the browser selection is inside the passage and the selected text is non-empty:
+
+- The selected text is stored in component state.
+- `SelectionToolbar` appears.
+- Clicking `Generate card` builds the deterministic draft.
+- `GeneratedCardDraftSheet` opens.
+
+- [ ] **Step 9: Run tests and build**
+
+Run:
+
+```powershell
+corepack pnpm test:web
+corepack pnpm --filter @art/web build
+```
+
+Expected: tests and build pass.
+
+- [ ] **Step 10: Browser verify**
+
+Open `http://localhost:5173`.
+
+Verify:
+
+- Select the text `all at once`.
+- A `Generate card` action appears.
+- Generated draft shows metadata and explanation.
+- Accepting the draft adds it to Review/Cards.
+
+- [ ] **Step 11: Commit**
+
+Run:
+
+```powershell
+git add apps/web
+git commit -m "feat: add manual selection card generation mock"
+```
+
+Expected: commit succeeds.
+
+---
+
+## Task 15: Add Backend Manual Selection AI Contract
+
+**Owner:** Codex local agent
+
+**Reason:** Manual selection is ultimately LLM-backed, not local manual entry. The backend owns prompt construction, provider calls, generation metadata, idempotency, and persistence.
+
+**Dependencies:** Execute after Task 5 and Task 9, because it needs the Fastify app and AI provider boundary.
+
+**Files:**
+- Modify: `apps/api/src/ai/provider.ts`
+- Modify: `apps/api/src/ai/mockProvider.ts`
+- Modify: `apps/api/src/ai/openAiCompatibleProvider.ts`
+- Create: `apps/api/src/routes/manualSelection.ts`
+- Create: `apps/api/src/services/manualSelectionService.ts`
+- Create: `apps/api/src/services/manualSelectionService.test.ts`
+- Modify: `apps/api/src/app.ts`
+- Modify: `apps/api/src/db/schema.sql`
+- Modify: `apps/api/src/db/schema.test.ts`
+- Modify: `packages/domain/src/types.ts`
+
+- [ ] **Step 1: Add manual selection generation types**
+
+Modify `packages/domain/src/types.ts` to add:
+
+```ts
+export interface ManualSelectionGenerationRequest {
+  clientOperationId: string;
+  userId: string;
+  articleId: string;
+  segmentId: string;
+  selectedText: string;
+  sentence: string;
+  context: string;
+  clientCreatedAt: string;
+}
+
+export interface ManualSelectionGenerationDraft {
+  candidate: CandidateExpression;
+  duplicateExpressionSenseId: string | null;
+  recommendation: "add" | "merge" | "reject";
+  recommendationReason: string;
+}
+```
+
+- [ ] **Step 2: Add failing service test**
+
+Create `apps/api/src/services/manualSelectionService.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { generateManualSelectionDraft } from "./manualSelectionService";
+import { createMockProvider } from "../ai/mockProvider";
+
+describe("generateManualSelectionDraft", () => {
+  it("generates a draft with model metadata from learner-selected text", async () => {
+    const result = await generateManualSelectionDraft({
+      provider: createMockProvider(),
+      request: {
+        clientOperationId: "client-op-selection-1",
+        userId: "user-1",
+        articleId: "article-1",
+        segmentId: "segment-1",
+        selectedText: "all at once",
+        sentence: "Teachers noticed that momentum did not arrive all at once.",
+        context: "Teachers noticed that momentum did not arrive all at once.",
+        clientCreatedAt: "2026-06-13T00:00:00.000Z",
+      },
+    });
+
+    expect(result.candidate.expression).toBe("all at once");
+    expect(result.candidate.modelProvider).toBe("mock");
+    expect(result.candidate.generationVersion).toBe("manual-selection-v1");
+    expect(result.recommendation).toBe("add");
+  });
+});
+```
+
+- [ ] **Step 3: Run service test and verify it fails**
+
+Run:
+
+```powershell
+corepack pnpm test:api -- src/services/manualSelectionService.test.ts
+```
+
+Expected: fails because the service does not exist.
+
+- [ ] **Step 4: Extend AI provider interface**
+
+Modify `provider.ts` so `AiProvider` supports:
+
+```ts
+generateManualSelectionDraft(request: ManualSelectionGenerationRequest): Promise<ManualSelectionGenerationDraft>;
+```
+
+- [ ] **Step 5: Implement mock provider manual selection**
+
+Modify `mockProvider.ts` so selected text `all at once` returns a deterministic draft with generation metadata and recommendation `add`.
+
+- [ ] **Step 6: Implement service**
+
+Create `manualSelectionService.ts` as a thin orchestration layer:
+
+- Validates non-empty selected text.
+- Calls `provider.generateManualSelectionDraft`.
+- Preserves `clientOperationId`.
+- Returns one draft.
+
+- [ ] **Step 7: Add API route**
+
+Create `routes/manualSelection.ts` with:
+
+```text
+POST /manual-selection/generate
+```
+
+Request body is `ManualSelectionGenerationRequest`. Response body is `ManualSelectionGenerationDraft`.
+
+Register the route in `app.ts`.
+
+- [ ] **Step 8: Extend schema**
+
+Modify `schema.sql` to add `ai_generation_jobs` with source type `segment_preselection` or `manual_selection`, `client_operation_id`, selected text, sentence, context, status, and model metadata.
+
+Update `schema.test.ts` to assert:
+
+- `ai_generation_jobs` exists.
+- `manual_selection` appears in the schema.
+- `client_operation_id` is present.
+- model metadata fields are present.
+
+- [ ] **Step 9: Run API tests**
+
+Run:
+
+```powershell
+corepack pnpm test:api
+```
+
+Expected: API tests pass.
+
+- [ ] **Step 10: Commit**
+
+Run:
+
+```powershell
+git add packages/domain apps/api
+git commit -m "feat: add manual selection ai generation contract"
+```
+
+Expected: commit succeeds.
+
+---
+
 ## Execution Order
 
 1. Task 1: Scaffold Workspace
@@ -1941,13 +2563,17 @@ Expected: commit succeeds.
 3. Task 3: Fixture-Driven Mobile MVP Frontend
 4. Task 10: Local End-to-End Verification
 5. Review the visible MVP with the user
-6. Task 4: Text Segmentation
-7. Task 5: Fastify API Skeleton
-8. Task 6: PostgreSQL Schema
-9. Task 7: IndexedDB Cache and Operation Queue
-10. Task 8: Sync API Contract
-11. Task 9: AI Provider Boundary
-12. Task 11: Server Agent Handoff
+6. Task 12: Enrich Review Cards and Add Card Library
+7. Task 13: Add Visible TXT/Markdown Import Entry Point
+8. Task 14: Add Manual Selection AI Card Generation Mock Flow
+9. Task 4: Text Segmentation
+10. Task 5: Fastify API Skeleton
+11. Task 6: PostgreSQL Schema
+12. Task 7: IndexedDB Cache and Operation Queue
+13. Task 8: Sync API Contract
+14. Task 9: AI Provider Boundary
+15. Task 15: Add Backend Manual Selection AI Contract
+16. Task 11: Server Agent Handoff
 
 This order deliberately puts the visible MVP before backend depth. If the learning interaction feels wrong, frontend behavior can be adjusted before persistence and deployment increase the cost of change.
 
@@ -1958,6 +2584,10 @@ Spec coverage:
 - Learning-first reading flow: covered by Tasks 3 and 10.
 - ExpressionSense vs Occurrence separation: covered by Tasks 2, 6, and 8.
 - Reading feedback separated from review feedback: covered by Tasks 2 and 3.
+- Rich review cards: covered by Task 12.
+- Card library: covered by Task 12.
+- Visible TXT/Markdown import entry point: covered by Task 13, with real backend import later in Tasks 4 and 5.
+- Manual selection AI card generation: covered locally by Task 14 and on the backend by Task 15.
 - Five candidate statuses: covered by Tasks 2, 3, 6, and 9.
 - First-segment priority generation: covered by Task 5.
 - PostgreSQL authority: covered by Task 6.
