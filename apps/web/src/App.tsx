@@ -20,7 +20,7 @@ export function App() {
     expressions: sampleExpressionSenses,
     activeReviewIds: ["sense-pick-up-steam"]
   });
-  const [toast, setToast] = useState("Reading feedback will not advance SRS.");
+  const [toast, setToast] = useState<string | null>(null);
 
   function addToReview(candidate: CandidateExpression) {
     const expressionSenseId = senseByCandidateId[candidate.id] ?? "sense-roll-out";
@@ -73,7 +73,7 @@ export function App() {
         ) : null}
         {tab === "library" ? <ImportPage /> : null}
 
-        <p className="toast">{toast}</p>
+        {toast ? <p className="toast">{toast}</p> : null}
         <nav className="tabs" aria-label="Primary">
           <button className={tab === "read" ? "active" : ""} type="button" onClick={() => setTab("read")}>
             <BookOpen size={18} />
