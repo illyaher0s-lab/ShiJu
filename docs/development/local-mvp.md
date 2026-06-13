@@ -3,9 +3,8 @@
 Run the fixture-driven mobile MVP:
 
 ```powershell
-corepack prepare pnpm@9.15.4 --activate
-pnpm install
-pnpm dev:web
+corepack pnpm install
+corepack pnpm dev:web
 ```
 
 Open:
@@ -23,10 +22,20 @@ Verify:
 - More expressions are collapsed by default.
 - Reading feedback does not advance SRS.
 - Review feedback advances SRS.
+- Cards are available from the card library tab.
+- A learner can generate a draft card from selected reading text.
+- A learner can generate a draft card from a manually entered expression plus context.
+- Pending offline actions create client operations with `client_operation_id`.
 
-If the local PowerShell session cannot find `pnpm`, use the Corepack form:
+Run verification:
 
 ```powershell
-corepack pnpm install
-corepack pnpm dev:web
+corepack pnpm test
+corepack pnpm build
 ```
+
+Local MVP limitations:
+
+- Fixture/mock data is intentional for this phase.
+- The local MVP does not call a real AI provider by default.
+- PostgreSQL is documented and modeled, but not required to view the fixture-driven web experience.
