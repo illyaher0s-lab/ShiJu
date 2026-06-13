@@ -248,7 +248,8 @@ dd {
 }
 
 .reviewCard,
-.libraryItem {
+.libraryItem,
+.cardLibraryItem {
   border: 1px solid #dfe6ef;
   border-radius: 8px;
   background: #ffffff;
@@ -265,6 +266,17 @@ dd {
   padding: 12px;
   border-radius: 8px;
   background: #f1f5f9;
+}
+
+.answerDetails {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.answerDetails div,
+.cardMetaGrid div {
+  min-width: 0;
 }
 
 .reviewActions {
@@ -284,6 +296,121 @@ dd {
   display: grid;
   align-content: start;
   gap: 16px;
+}
+
+.cardsScreen {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.searchBox {
+  min-height: 44px;
+  border: 1px solid #d7dfeb;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+.searchBox input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.cardList {
+  display: grid;
+  gap: 10px;
+}
+
+.cardLibraryItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+}
+
+.cardLibraryItem span:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cardLibraryItem small {
+  color: #64748b;
+}
+
+.dueBadge,
+.quietBadge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.dueBadge {
+  background: #fee2e2;
+  color: #b42318;
+}
+
+.quietBadge {
+  background: #eef2ff;
+  color: #3154c8;
+}
+
+.cardMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.cardMetaGrid span {
+  display: block;
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.cardMetaGrid strong {
+  display: block;
+  margin-top: 2px;
+}
+
+.occurrenceEvidence h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.occurrenceItem {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 0;
+}
+
+.occurrenceItem p {
+  margin: 0;
+}
+
+.occurrenceItem small {
+  color: #64748b;
 }
 
 .libraryItem h2 {
@@ -317,7 +444,7 @@ dd {
   bottom: 0;
   width: min(430px, 100vw);
   transform: translateX(-50%);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   border-top: 1px solid #dce3ec;
   background: #ffffff;

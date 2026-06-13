@@ -53,8 +53,44 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
           </button>
         ) : (
           <div className="answer">
-            <p>{current.meaningZh}</p>
-            {occurrence ? <p className="translation">{occurrence.sentenceTranslation}</p> : null}
+            <dl className="answerDetails">
+              <div>
+                <dt>Meaning</dt>
+                <dd>{current.meaningZh}</dd>
+              </div>
+              <div>
+                <dt>Local meaning</dt>
+                <dd>{occurrence?.localMeaning ?? "Use the expression in this article context."}</dd>
+              </div>
+              <div>
+                <dt>Original sentence</dt>
+                <dd>{occurrence?.sentence ?? "No saved occurrence yet."}</dd>
+              </div>
+              <div>
+                <dt>Sentence translation</dt>
+                <dd>{occurrence?.sentenceTranslation ?? "No translation saved yet."}</dd>
+              </div>
+              <div>
+                <dt>Usage hint</dt>
+                <dd>{occurrence?.syntaxHint ?? "Focus on how the expression works in the sentence."}</dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>{occurrence ? `Article ${occurrence.articleId}, segment ${occurrence.segmentId}` : "No source"}</dd>
+              </div>
+              <div>
+                <dt>Difficulty</dt>
+                <dd>{current.difficulty}</dd>
+              </div>
+              <div>
+                <dt>Review count</dt>
+                <dd>{current.reviewCount}</dd>
+              </div>
+              <div>
+                <dt>Mistakes</dt>
+                <dd>{current.mistakeCount}</dd>
+              </div>
+            </dl>
           </div>
         )}
 

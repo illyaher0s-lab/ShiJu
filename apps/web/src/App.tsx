@@ -1,13 +1,14 @@
 import type { CandidateExpression, ReadingFeedback, ReviewFeedback } from "@art/domain";
-import { BookOpen, Library, RotateCcw } from "lucide-react";
+import { BookMarked, BookOpen, Files, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import { CardLibraryPage } from "./features/cards/CardLibraryPage";
 import { ImportPage } from "./features/import/ImportPage";
 import { ReadingPage } from "./features/reading/ReadingPage";
 import { ReviewPage } from "./features/review/ReviewPage";
 import { applyReviewAction, type ReviewState } from "./features/review/reviewState";
 import { sampleCandidates, sampleExpressionSenses, sampleOccurrences, sampleSegment } from "./fixtures/sampleSegment";
 
-type Tab = "read" | "review" | "library";
+type Tab = "read" | "review" | "cards" | "articles";
 
 const senseByCandidateId: Record<string, string> = {
   "candidate-roll-out": "sense-roll-out",
@@ -71,7 +72,10 @@ export function App() {
             onReview={reviewFeedback}
           />
         ) : null}
-        {tab === "library" ? <ImportPage /> : null}
+        {tab === "cards" ? (
+          <CardLibraryPage expressions={reviewState.expressions} occurrences={sampleOccurrences} />
+        ) : null}
+        {tab === "articles" ? <ImportPage /> : null}
 
         {toast ? <p className="toast">{toast}</p> : null}
         <nav className="tabs" aria-label="Primary">
@@ -83,9 +87,13 @@ export function App() {
             <RotateCcw size={18} />
             Review
           </button>
-          <button className={tab === "library" ? "active" : ""} type="button" onClick={() => setTab("library")}>
-            <Library size={18} />
-            Library
+          <button className={tab === "cards" ? "active" : ""} type="button" onClick={() => setTab("cards")}>
+            <BookMarked size={18} />
+            Cards
+          </button>
+          <button className={tab === "articles" ? "active" : ""} type="button" onClick={() => setTab("articles")}>
+            <Files size={18} />
+            Articles
           </button>
         </nav>
       </div>
