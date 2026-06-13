@@ -298,6 +298,50 @@ dd {
   gap: 16px;
 }
 
+.importPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.importDrop {
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  background: #ffffff;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.importDrop span {
+  color: #536174;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.importDrop strong {
+  font-size: 1rem;
+}
+
+.importDrop input {
+  width: 100%;
+}
+
+.generationSteps {
+  display: grid;
+  gap: 8px;
+}
+
+.generationSteps span {
+  border: 1px solid #dfe6ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .cardsScreen {
   display: grid;
   align-content: start;
