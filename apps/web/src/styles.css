@@ -187,7 +187,9 @@ h1 {
 
 .sheetActions button,
 .expandButton,
-.reviewActions button {
+.reviewActions button,
+.draftActions button,
+.selectionToolbar button {
   min-height: 42px;
   border: 1px solid #d7dfeb;
   border-radius: 8px;
@@ -198,6 +200,48 @@ h1 {
   justify-content: center;
   gap: 6px;
   font-weight: 700;
+}
+
+.selectionToolbar {
+  position: sticky;
+  bottom: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  margin-top: 16px;
+  padding: 10px;
+  box-shadow: 0 10px 28px rgba(23, 32, 51, 0.12);
+}
+
+.selectionToolbar span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.selectionToolbar button {
+  flex: 0 0 auto;
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  padding: 0 12px;
+}
+
+.draftDetails {
+  margin: 16px 0;
+}
+
+.draftActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .expandButton {

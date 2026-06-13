@@ -1,4 +1,4 @@
-import type { CandidateExpression, ReadingFeedback, ReviewFeedback } from "@art/domain";
+import type { CandidateExpression, ExpressionSense, Occurrence, ReadingFeedback, ReviewFeedback } from "@art/domain";
 import { BookMarked, BookOpen, Files, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { CardLibraryPage } from "./features/cards/CardLibraryPage";
@@ -21,18 +21,21 @@ export function App() {
     expressions: sampleExpressionSenses,
     activeReviewIds: ["sense-pick-up-steam"]
   });
+  const [occurrences, setOccurrences] = useState<Occurrence[]>(sampleOccurrences);
   const [toast, setToast] = useState<string | null>(null);
 
   function addToReview(candidate: CandidateExpression) {
-    const expressionSenseId = senseByCandidateId[candidate.id] ?? "sense-roll-out";
+    const expressionSenseId =
+      senseByCandidateId[candidate.id] ?? `sense-${candidate.normalizedForm.replaceAll(/\s+/g, "-")}`;
     setReviewState((current) =>
-      applyReviewAction(current, {
+      applyReviewAction(ensureExpressionSense(current, candidate, expressionSenseId), {
         source: "reading",
         expressionSenseId,
         feedback: "add_to_review",
         at: "2026-06-13T00:00:00.000Z"
       })
     );
+    setOccurrences((current) => ensureOccurrence(current, candidate, expressionSenseId));
     setToast(`${candidate.expression} added to review.`);
   }
 
@@ -67,13 +70,13 @@ export function App() {
         {tab === "review" ? (
           <ReviewPage
             expressions={reviewState.expressions}
-            occurrences={sampleOccurrences}
+            occurrences={occurrences}
             activeReviewIds={reviewState.activeReviewIds ?? []}
             onReview={reviewFeedback}
           />
         ) : null}
         {tab === "cards" ? (
-          <CardLibraryPage expressions={reviewState.expressions} occurrences={sampleOccurrences} />
+          <CardLibraryPage expressions={reviewState.expressions} occurrences={occurrences} />
         ) : null}
         {tab === "articles" ? <ImportPage /> : null}
 
@@ -99,4 +102,55 @@ export function App() {
       </div>
     </div>
   );
+}
+
+function ensureExpressionSense(state: ReviewState, candidate: CandidateExpression, expressionSenseId: string): ReviewState {
+  if (state.expressions.some((expression) => expression.id === expressionSenseId)) return state;
+
+  const now = new Date().toISOString();
+  const expression: ExpressionSense = {
+    id: expressionSenseId,
+    userId: candidate.userId,
+    expression: candidate.expression,
+    normalizedForm: candidate.normalizedForm,
+    type: candidate.type,
+    meaningZh: candidate.meaningZh,
+    difficulty: candidate.difficulty,
+    masteryStatus: "new",
+    srsDueAt: null,
+    reviewCount: 0,
+    mistakeCount: 0,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  };
+
+  return {
+    ...state,
+    expressions: [...state.expressions, expression],
+  };
+}
+
+function ensureOccurrence(occurrences: Occurrence[], candidate: CandidateExpression, expressionSenseId: string): Occurrence[] {
+  const occurrenceId = `occurrence-${expressionSenseId}`;
+  if (occurrences.some((occurrence) => occurrence.id === occurrenceId)) return occurrences;
+  const now = new Date().toISOString();
+
+  return [
+    ...occurrences,
+    {
+      id: occurrenceId,
+      userId: candidate.userId,
+      expressionSenseId,
+      articleId: candidate.articleId,
+      segmentId: candidate.segmentId,
+      sentence: candidate.sentence,
+      sentenceTranslation: candidate.sentenceTranslation,
+      localMeaning: candidate.localMeaning,
+      syntaxHint: candidate.syntaxHint,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+  ];
 }

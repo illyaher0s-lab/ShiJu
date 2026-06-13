@@ -3,6 +3,9 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { renderHighlightedText } from "../../lib/highlightText";
 import { ExpressionSheet } from "./ExpressionSheet";
+import { GeneratedCardDraftSheet } from "./GeneratedCardDraftSheet";
+import { buildManualSelectionDraft } from "./manualSelection";
+import { SelectionToolbar } from "./SelectionToolbar";
 
 interface ReadingPageProps {
   segment: Segment;
@@ -14,11 +17,39 @@ interface ReadingPageProps {
 export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedback }: ReadingPageProps) {
   const [selected, setSelected] = useState<CandidateExpression | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [selectedText, setSelectedText] = useState<string | null>(null);
+  const [generatedDraft, setGeneratedDraft] = useState<CandidateExpression | null>(null);
   const selectedCandidates = useMemo(
     () => candidates.filter((candidate) => candidate.candidateStatus === "selected").slice(0, 6),
     [candidates]
   );
   const moreCandidates = candidates.filter((candidate) => appearsInMoreExpressions(candidate.candidateStatus));
+
+  function captureManualSelection() {
+    const selection = window.getSelection();
+    const text = selection?.toString().trim() ?? "";
+    if (!text) return;
+    setSelectedText(text);
+  }
+
+  function generateDraft(text: string) {
+    const sentence = sentenceContaining(segment.text, text);
+    setGeneratedDraft(
+      buildManualSelectionDraft({
+        selectedText: text,
+        sentence,
+        articleId: segment.articleId,
+        segmentId: segment.id,
+        generatedAt: new Date().toISOString(),
+      }),
+    );
+  }
+
+  function acceptGeneratedDraft(draft: CandidateExpression) {
+    onAddToReview(draft);
+    setGeneratedDraft(null);
+    setSelectedText(null);
+  }
 
   return (
     <main className="screen">
@@ -27,7 +58,12 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
         <h1>Read first, learn in place</h1>
       </section>
 
-      <article className="passage" aria-label="Original reading segment">
+      <article
+        className="passage"
+        aria-label="Original reading segment"
+        onMouseUp={captureManualSelection}
+        onTouchEnd={captureManualSelection}
+      >
         {renderHighlightedText({
           text: segment.text,
           candidates: selectedCandidates,
@@ -57,6 +93,10 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
         ) : null}
       </section>
 
+      {selectedText && !generatedDraft ? (
+        <SelectionToolbar selectedText={selectedText} onGenerate={generateDraft} />
+      ) : null}
+
       {selected ? (
         <ExpressionSheet
           candidate={selected}
@@ -65,6 +105,19 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
           onClose={() => setSelected(null)}
         />
       ) : null}
+
+      {generatedDraft ? (
+        <GeneratedCardDraftSheet
+          draft={generatedDraft}
+          onAccept={acceptGeneratedDraft}
+          onDismiss={() => setGeneratedDraft(null)}
+        />
+      ) : null}
     </main>
   );
+}
+
+function sentenceContaining(text: string, selectedText: string): string {
+  const sentences = text.match(/[^.!?]+[.!?]/g) ?? [text];
+  return sentences.find((sentence) => sentence.includes(selectedText))?.trim() ?? selectedText;
 }

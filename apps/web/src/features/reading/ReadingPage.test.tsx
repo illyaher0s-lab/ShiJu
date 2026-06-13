@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { sampleCandidates, sampleSegment } from "../../fixtures/sampleSegment";
@@ -43,5 +43,31 @@ describe("ReadingPage", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /expand/i }));
     expect(screen.getByText(/Full sentence/i)).toBeInTheDocument();
+  });
+
+  it("generates a card draft from learner-selected text", async () => {
+    const onAddToReview = vi.fn();
+    const selectionSpy = vi.spyOn(window, "getSelection").mockReturnValue({
+      toString: () => "all at once",
+    } as Selection);
+
+    render(
+      <ReadingPage
+        segment={sampleSegment}
+        candidates={sampleCandidates}
+        onAddToReview={onAddToReview}
+        onReadingFeedback={vi.fn()}
+      />,
+    );
+
+    fireEvent.mouseUp(screen.getByLabelText("Original reading segment"));
+    await userEvent.click(screen.getByRole("button", { name: "Generate card" }));
+
+    expect(screen.getByText("manual-selection-mock-v1")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Add to review" }));
+
+    expect(onAddToReview).toHaveBeenCalledWith(expect.objectContaining({ expression: "all at once" }));
+    selectionSpy.mockRestore();
   });
 });
