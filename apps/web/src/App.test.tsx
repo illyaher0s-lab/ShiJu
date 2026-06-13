@@ -35,6 +35,6 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "roll out" }));
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(screen.getByText("Pending sync: 1")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Pending sync: 1" })).toBeInTheDocument();
   });
 });

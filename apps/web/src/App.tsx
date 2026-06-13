@@ -107,6 +107,11 @@ export function App() {
   return (
     <div className="appShell">
       <div className="phoneFrame">
+        {pendingOperations.length > 0 ? (
+          <div className="syncStatus" role="status" aria-label={`Pending sync: ${pendingOperations.length}`}>
+            Pending sync: {pendingOperations.length}
+          </div>
+        ) : null}
         {tab === "read" ? (
           <ReadingPage
             segment={sampleSegment}
@@ -133,7 +138,6 @@ export function App() {
         {tab === "articles" ? <ImportPage /> : null}
 
         {toast ? <p className="toast">{toast}</p> : null}
-        {pendingOperations.length > 0 ? <p className="syncStatus">Pending sync: {pendingOperations.length}</p> : null}
         <nav className="tabs" aria-label="Primary">
           <button className={tab === "read" ? "active" : ""} type="button" onClick={() => setTab("read")}>
             <BookOpen size={18} />

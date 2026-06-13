@@ -1,4 +1,9 @@
+import { useState } from "react";
+
 export function ImportPage() {
+  const [pastedText, setPastedText] = useState("");
+  const [pasteAccepted, setPasteAccepted] = useState(false);
+
   return (
     <main className="screen library">
       <section className="readingHeader">
@@ -7,6 +12,21 @@ export function ImportPage() {
       </section>
 
       <section className="importPanel">
+        <label className="pastePanel">
+          <span>Paste article text</span>
+          <textarea
+            aria-label="Paste article text"
+            value={pastedText}
+            onChange={(event) => {
+              setPastedText(event.target.value);
+              setPasteAccepted(false);
+            }}
+          />
+          <button type="button" disabled={!pastedText.trim()} onClick={() => setPasteAccepted(true)}>
+            Use pasted text
+          </button>
+        </label>
+        {pasteAccepted ? <p className="importStatus">Pasted article ready</p> : null}
         <label className="importDrop">
           <span>Import TXT or Markdown article</span>
           <strong>Choose a .txt or .md file</strong>
