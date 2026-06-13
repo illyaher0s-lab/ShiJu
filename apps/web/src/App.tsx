@@ -1,4 +1,11 @@
-import type { CandidateExpression, ExpressionSense, Occurrence, ReadingFeedback, ReviewFeedback } from "@art/domain";
+import type {
+  CandidateExpression,
+  ClientOperation,
+  ExpressionSense,
+  Occurrence,
+  ReadingFeedback,
+  ReviewFeedback,
+} from "@art/domain";
 import { BookMarked, BookOpen, Files, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { CardLibraryPage } from "./features/cards/CardLibraryPage";
@@ -7,6 +14,8 @@ import { ReadingPage } from "./features/reading/ReadingPage";
 import { ReviewPage } from "./features/review/ReviewPage";
 import { applyReviewAction, type ReviewState } from "./features/review/reviewState";
 import { sampleCandidates, sampleExpressionSenses, sampleOccurrences, sampleSegment } from "./fixtures/sampleSegment";
+import { addRecord } from "./storage/db";
+import { createClientOperation } from "./storage/operationQueue";
 
 type Tab = "read" | "review" | "cards" | "articles";
 
@@ -22,11 +31,18 @@ export function App() {
     activeReviewIds: ["sense-pick-up-steam"]
   });
   const [occurrences, setOccurrences] = useState<Occurrence[]>(sampleOccurrences);
+  const [pendingOperations, setPendingOperations] = useState<ClientOperation[]>([]);
   const [toast, setToast] = useState<string | null>(null);
 
   function addToReview(candidate: CandidateExpression) {
     const expressionSenseId =
       senseByCandidateId[candidate.id] ?? `sense-${candidate.normalizedForm.replaceAll(/\s+/g, "-")}`;
+    enqueuePendingOperation({
+      operationType: "reading.add_to_review",
+      targetType: "candidate_expression",
+      targetId: candidate.id,
+      payload: { expressionSenseId, expression: candidate.expression },
+    });
     setReviewState((current) =>
       applyReviewAction(ensureExpressionSense(current, candidate, expressionSenseId), {
         source: "reading",
@@ -41,6 +57,12 @@ export function App() {
 
   function readingFeedback(candidate: CandidateExpression, feedback: Exclude<ReadingFeedback, "add_to_review">) {
     const expressionSenseId = senseByCandidateId[candidate.id] ?? "sense-roll-out";
+    enqueuePendingOperation({
+      operationType: "reading.feedback",
+      targetType: "candidate_expression",
+      targetId: candidate.id,
+      payload: { expressionSenseId, feedback },
+    });
     setReviewState((current) =>
       applyReviewAction(current, {
         source: "reading",
@@ -53,7 +75,33 @@ export function App() {
   }
 
   function reviewFeedback(expressionSenseId: string, feedback: ReviewFeedback, at: string) {
+    enqueuePendingOperation({
+      operationType: "review.feedback",
+      targetType: "expression_sense",
+      targetId: expressionSenseId,
+      payload: { feedback, reviewedAt: at },
+    });
     setReviewState((current) => applyReviewAction(current, { source: "review", expressionSenseId, feedback, at }));
+  }
+
+  function enqueuePendingOperation(input: {
+    operationType: string;
+    targetType: string;
+    targetId: string;
+    payload: Record<string, unknown>;
+  }) {
+    const operation = createClientOperation({
+      userId: "user-1",
+      operationType: input.operationType,
+      targetType: input.targetType,
+      targetId: input.targetId,
+      payload: input.payload,
+      now: new Date().toISOString(),
+    });
+    setPendingOperations((current) => [...current, operation]);
+    void addRecord("clientOperations", operation).catch(() => {
+      // IndexedDB is unavailable in tests and may be blocked in some browser modes.
+    });
   }
 
   return (
@@ -85,6 +133,7 @@ export function App() {
         {tab === "articles" ? <ImportPage /> : null}
 
         {toast ? <p className="toast">{toast}</p> : null}
+        {pendingOperations.length > 0 ? <p className="syncStatus">Pending sync: {pendingOperations.length}</p> : null}
         <nav className="tabs" aria-label="Primary">
           <button className={tab === "read" ? "active" : ""} type="button" onClick={() => setTab("read")}>
             <BookOpen size={18} />
