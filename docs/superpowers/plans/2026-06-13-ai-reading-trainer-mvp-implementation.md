@@ -3021,7 +3021,7 @@ Expected: commit succeeds.
 - Modify: `apps/web/src/styles.css`
 - Modify: `apps/web/src/storage/db.ts` if daily targets need local persistence
 
-- [ ] **Step 1: Add failing home page test**
+- [x] **Step 1: Add failing home page test**
 
 Test that the app opens to Home first and shows:
 
@@ -3032,7 +3032,7 @@ Test that the app opens to Home first and shows:
 - Daily review-card target control
 - Pending sync count as a small status, not an overlay
 
-- [ ] **Step 2: Implement Home page**
+- [x] **Step 2: Implement Home page**
 
 Create a mobile-first dashboard with compact stats and primary actions:
 
@@ -3043,11 +3043,11 @@ Create a mobile-first dashboard with compact stats and primary actions:
 
 Keep it utilitarian and learning-focused, not a marketing page.
 
-- [ ] **Step 3: Move pending sync status**
+- [x] **Step 3: Move pending sync status**
 
 Remove persistent pending-sync status from reading/review surfaces. Show it on Home as a small status line. The learner should not need manual sync during normal use; a retry action can be added later when server sync exists.
 
-- [ ] **Step 4: Run web tests and build**
+- [x] **Step 4: Run web tests and build**
 
 Run:
 
@@ -3056,7 +3056,7 @@ corepack pnpm test:web
 corepack pnpm build
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
@@ -3081,7 +3081,7 @@ git commit -m "feat: add learning home dashboard"
 - Modify: `apps/web/src/styles.css`
 - Modify: `apps/web/src/App.tsx`
 
-- [ ] **Step 1: Add failing review button test**
+- [x] **Step 1: Add failing review button test**
 
 Test that review buttons render as:
 
@@ -3091,11 +3091,11 @@ Test that review buttons render as:
 
 and use distinct classes for red, amber, and green styling.
 
-- [ ] **Step 2: Add failing long-press mastered test**
+- [x] **Step 2: Add failing long-press mastered test**
 
 Test that long-pressing `知道` reveals `熟知`, and choosing `熟知` removes the expression from the active review queue while keeping it available in Cards.
 
-- [ ] **Step 3: Extend review feedback/domain action**
+- [x] **Step 3: Extend review feedback/domain action**
 
 Support a mastered action without treating it as deletion. Recommended model:
 
@@ -3103,7 +3103,7 @@ Support a mastered action without treating it as deletion. Recommended model:
 - Add a separate action or operation type for `review.mark_mastered`.
 - Set `masteryStatus: "mastered"` and remove the item from active review IDs.
 
-- [ ] **Step 4: Implement UI styling**
+- [x] **Step 4: Implement UI styling**
 
 Style buttons:
 
@@ -3112,7 +3112,7 @@ Style buttons:
 - `知道`: green
 - `熟知`: quiet positive secondary action shown only after long press
 
-- [ ] **Step 5: Run tests and build**
+- [x] **Step 5: Run tests and build**
 
 Run:
 
@@ -3121,7 +3121,7 @@ corepack pnpm test:web
 corepack pnpm build
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
