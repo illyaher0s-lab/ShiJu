@@ -20,4 +20,14 @@ describe("database schema", () => {
     expect(schema).toContain("create table expression_senses");
     expect(schema).toContain("create table occurrences");
   });
+
+  it("stores SM-2-compatible scheduling state", () => {
+    expect(schema).toContain("ease_factor");
+    expect(schema).toContain("interval_days");
+    expect(schema).toContain("lapse_count");
+    expect(schema).toContain("previous_ease_factor");
+    expect(schema).toContain("next_ease_factor");
+    expect(schema).toContain("previous_interval_days");
+    expect(schema).toContain("next_interval_days");
+  });
 });

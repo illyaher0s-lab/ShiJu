@@ -18,7 +18,11 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
   const longPressTimer = useRef<number | null>(null);
   const now = nowIso();
   const due = useMemo(
-    () => expressions.filter((expression) => activeReviewIds.includes(expression.id) && isDue(expression.srsDueAt, now)),
+    () =>
+      expressions.filter(
+        (expression) =>
+          expression.masteryStatus !== "mastered" && activeReviewIds.includes(expression.id) && isDue(expression.srsDueAt, now)
+      ),
     [activeReviewIds, expressions, now]
   );
   const current = due[0];

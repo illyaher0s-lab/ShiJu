@@ -129,6 +129,9 @@ export const sampleExpressionSenses: ExpressionSense[] = [
     srsDueAt: null,
     reviewCount: 0,
     mistakeCount: 0,
+    easeFactor: 2.5,
+    intervalDays: 0,
+    lapseCount: 0,
     createdAt: generatedAt,
     updatedAt: generatedAt,
     deletedAt: null
@@ -145,6 +148,9 @@ export const sampleExpressionSenses: ExpressionSense[] = [
     srsDueAt: "2026-06-13T00:00:00.000Z",
     reviewCount: 0,
     mistakeCount: 0,
+    easeFactor: 2.5,
+    intervalDays: 0,
+    lapseCount: 0,
     createdAt: generatedAt,
     updatedAt: generatedAt,
     deletedAt: null

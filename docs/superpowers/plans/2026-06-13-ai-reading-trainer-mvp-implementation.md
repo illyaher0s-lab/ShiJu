@@ -3147,7 +3147,7 @@ git commit -m "feat: polish review feedback and mastered action"
 - Modify: `apps/web/src/fixtures/sampleSegment.ts`
 - Modify: any web tests that construct `ExpressionSense`
 
-- [ ] **Step 1: Add failing SM-2 tests**
+- [x] **Step 1: Add failing SM-2 tests**
 
 Cover:
 
@@ -3156,7 +3156,7 @@ Cover:
 - `unknown` resets repetitions, increments mistake/lapse count, and schedules soon.
 - `mastered` items are excluded from normal due review filtering.
 
-- [ ] **Step 2: Extend scheduling fields**
+- [x] **Step 2: Extend scheduling fields**
 
 Add to `ExpressionSense`:
 
@@ -3177,7 +3177,7 @@ Review logs should preserve enough before/after state to debug scheduling:
 - previous/next interval days
 - feedback/rating
 
-- [ ] **Step 3: Implement SM-2-compatible transitions**
+- [x] **Step 3: Implement SM-2-compatible transitions**
 
 Recommended defaults:
 
@@ -3189,11 +3189,11 @@ Recommended defaults:
 
 Do not implement full FSRS training in this task.
 
-- [ ] **Step 4: Wire review state**
+- [x] **Step 4: Wire review state**
 
 Ensure only review page feedback changes SM-2 scheduling. Reading feedback remains triage only.
 
-- [ ] **Step 5: Run tests and build**
+- [x] **Step 5: Run tests and build**
 
 Run:
 
@@ -3202,7 +3202,7 @@ corepack pnpm test
 corepack pnpm build
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 

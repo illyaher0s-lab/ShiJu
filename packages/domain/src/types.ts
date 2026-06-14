@@ -70,6 +70,9 @@ export interface ExpressionSense {
   srsDueAt: string | null;
   reviewCount: number;
   mistakeCount: number;
+  easeFactor: number;
+  intervalDays: number;
+  lapseCount: number;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -98,8 +101,13 @@ export interface ReviewLog {
   userId: string;
   expressionSenseId: string;
   feedback: ReviewFeedback;
+  rating: number;
   previousDueAt: string | null;
   nextDueAt: string;
+  previousEaseFactor: number;
+  nextEaseFactor: number;
+  previousIntervalDays: number;
+  nextIntervalDays: number;
   reviewedAt: string;
   createdAt: string;
 }

@@ -65,6 +65,9 @@ create table expression_senses (
   srs_due_at timestamptz,
   review_count integer not null default 0 check (review_count >= 0),
   mistake_count integer not null default 0 check (mistake_count >= 0),
+  ease_factor numeric(4,2) not null default 2.5 check (ease_factor >= 1.3),
+  interval_days integer not null default 0 check (interval_days >= 0),
+  lapse_count integer not null default 0 check (lapse_count >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   deleted_at timestamptz
@@ -102,8 +105,13 @@ create table review_logs (
   user_id text not null,
   expression_sense_id uuid not null references expression_senses(id) on delete cascade,
   feedback text not null check (feedback in ('known', 'fuzzy', 'unknown')),
+  rating integer not null check (rating between 0 and 5),
   previous_due_at timestamptz,
   next_due_at timestamptz not null,
+  previous_ease_factor numeric(4,2) not null,
+  next_ease_factor numeric(4,2) not null,
+  previous_interval_days integer not null,
+  next_interval_days integer not null,
   reviewed_at timestamptz not null,
   created_at timestamptz not null default now()
 );

@@ -78,4 +78,20 @@ describe("ReviewPage", () => {
     expect(onMarkMastered).toHaveBeenCalledWith("sense-roll-out", "2026-06-13T00:00:00.000Z");
     vi.useRealTimers();
   });
+
+  it("excludes mastered expressions from the active review queue", () => {
+    render(
+      <ReviewPage
+        expressions={sampleExpressionSenses.map((expression) =>
+          expression.id === "sense-pick-up-steam" ? { ...expression, masteryStatus: "mastered" } : expression,
+        )}
+        occurrences={sampleOccurrences}
+        activeReviewIds={["sense-pick-up-steam"]}
+        onReview={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Review queue clear" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "pick up steam" })).not.toBeInTheDocument();
+  });
 });
