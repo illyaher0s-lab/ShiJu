@@ -141,3 +141,20 @@ export interface ManualSelectionGenerationDraft {
   recommendation: "add" | "merge" | "reject";
   recommendationReason: string;
 }
+
+export interface ContextEntryGenerationRequest {
+  clientOperationId: string;
+  userId: string;
+  expression: string;
+  contextLabel: string;
+  contextNote: string;
+  sentence: string | null;
+  clientCreatedAt: string;
+}
+
+export interface ContextEntryGenerationDraft {
+  candidate: CandidateExpression;
+  duplicateExpressionSenseId: string | null;
+  recommendation: "add" | "merge" | "reject";
+  recommendationReason: string;
+}

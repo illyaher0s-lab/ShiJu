@@ -102,6 +102,75 @@ export function createMockProvider(): AiProvider {
         recommendationReason: "New expression not in learner's existing cards.",
       };
     },
+
+    async generateContextEntryDraft(request) {
+      const generatedAt = new Date().toISOString();
+      const expression = request.expression.toLowerCase().trim();
+
+      // Deterministic mock for "buff" in "game" context
+      if (expression === "buff" && request.contextLabel.toLowerCase().includes("game")) {
+        return {
+          candidate: {
+            id: `context-${request.clientOperationId}`,
+            userId: request.userId,
+            articleId: "context-entry",
+            segmentId: "context-entry",
+            expression: "buff",
+            normalizedForm: "buff",
+            type: "other",
+            meaningZh: "增益、强化效果",
+            localMeaning: "a temporary improvement or boost in a game context",
+            sentence: request.sentence ?? "This potion gives your character a short attack buff.",
+            sentenceTranslation: "这瓶药水会给你的角色一个短暂的攻击增益。",
+            syntaxHint: request.contextNote ? `Source context: ${request.contextNote}` : `Source context: ${request.contextLabel}`,
+            difficulty: "B1",
+            valueScore: 75,
+            candidateStatus: "backup_candidate",
+            statusReason: `Generated from learner-entered ${request.contextLabel} context.`,
+            occurrenceCount: 1,
+            modelProvider: "mock",
+            modelName: "context-entry-mock-v1",
+            promptVersion: "context-entry-prompt-v1",
+            generationVersion: "context-entry-v1",
+            generatedAt,
+          },
+          duplicateExpressionSenseId: null,
+          recommendation: "add",
+          recommendationReason: "New expression not in learner's existing cards.",
+        };
+      }
+
+      // Default fallback for other context entries
+      return {
+        candidate: {
+          id: `context-${request.clientOperationId}`,
+          userId: request.userId,
+          articleId: "context-entry",
+          segmentId: "context-entry",
+          expression: request.expression,
+          normalizedForm: request.expression.toLowerCase(),
+          type: "other",
+          meaningZh: "根据场景生成的含义",
+          localMeaning: `meaning inferred from ${request.contextLabel} context`,
+          sentence: request.sentence ?? `I noticed "${request.expression}" in a ${request.contextLabel} context.`,
+          sentenceTranslation: `我在${request.contextLabel}场景中注意到了"${request.expression}"。`,
+          syntaxHint: request.contextNote ? `Source context: ${request.contextNote}` : `Source context: ${request.contextLabel}`,
+          difficulty: "B1",
+          valueScore: 70,
+          candidateStatus: "backup_candidate",
+          statusReason: `Generated from learner-entered ${request.contextLabel} context.`,
+          occurrenceCount: 1,
+          modelProvider: "mock",
+          modelName: "context-entry-mock-v1",
+          promptVersion: "context-entry-prompt-v1",
+          generationVersion: "context-entry-v1",
+          generatedAt,
+        },
+        duplicateExpressionSenseId: null,
+        recommendation: "add",
+        recommendationReason: "New expression not in learner's existing cards.",
+      };
+    },
   };
 }
 

@@ -37,4 +37,10 @@ describe("database schema", () => {
     expect(schema).toContain("client_operation_id");
     expect(schema).toContain("model_provider");
   });
+
+  it("supports context-entry card generation", () => {
+    expect(schema).toContain("context_entry");
+    expect(schema).toContain("context_label");
+    expect(schema).toContain("context_note");
+  });
 });
