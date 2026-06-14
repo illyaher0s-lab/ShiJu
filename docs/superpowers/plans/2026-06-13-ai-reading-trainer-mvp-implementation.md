@@ -2235,7 +2235,7 @@ Expected: commit succeeds.
 - Modify: `apps/web/src/App.tsx`
 - Modify: `apps/web/src/styles.css`
 
-- [ ] **Step 1: Add failing manual selection unit test**
+- [x] **Step 1: Add failing manual selection unit test**
 
 Create `apps/web/src/features/reading/manualSelection.test.ts`:
 
@@ -2261,7 +2261,7 @@ describe("buildManualSelectionDraft", () => {
 });
 ```
 
-- [ ] **Step 2: Run manual selection test and verify it fails**
+- [x] **Step 2: Run manual selection test and verify it fails**
 
 Run:
 
@@ -2271,7 +2271,7 @@ corepack pnpm --filter @art/web test -- src/features/reading/manualSelection.tes
 
 Expected: fails because `manualSelection.ts` does not exist.
 
-- [ ] **Step 3: Implement deterministic local draft builder**
+- [x] **Step 3: Implement deterministic local draft builder**
 
 Create `manualSelection.ts` with a pure function that returns a `CandidateExpression` draft using:
 
@@ -2283,7 +2283,7 @@ Create `manualSelection.ts` with a pure function that returns a `CandidateExpres
 
 This is a local stand-in for the future backend LLM call.
 
-- [ ] **Step 4: Add failing selection toolbar and draft sheet tests**
+- [x] **Step 4: Add failing selection toolbar and draft sheet tests**
 
 Create `apps/web/src/features/reading/SelectionToolbar.test.tsx`:
 
@@ -2346,7 +2346,7 @@ describe("GeneratedCardDraftSheet", () => {
 
 These component tests cover the selection-generation UI contract. `ReadingPage` still needs browser verification for native text selection because jsdom selection APIs are not reliable enough for the full gesture.
 
-- [ ] **Step 5: Run selection UI tests and verify they fail**
+- [x] **Step 5: Run selection UI tests and verify they fail**
 
 Run:
 
@@ -2356,7 +2356,7 @@ corepack pnpm --filter @art/web test -- src/features/reading/SelectionToolbar.te
 
 Expected: fails because the components do not exist.
 
-- [ ] **Step 6: Implement selection toolbar and draft sheet**
+- [x] **Step 6: Implement selection toolbar and draft sheet**
 
 Create:
 
@@ -2365,11 +2365,11 @@ Create:
 
 Modify `ReadingPage.tsx` to listen for text selection inside the passage and show the toolbar near the lower edge of the reading area.
 
-- [ ] **Step 7: Wire draft acceptance**
+- [x] **Step 7: Wire draft acceptance**
 
 Modify `App.tsx` so accepting a generated draft creates or activates a fixture `ExpressionSense` and adds it to review. In the mock MVP, support at least `all at once` as a deterministic generated card.
 
-- [ ] **Step 8: Add browser-verifiable reading selection behavior**
+- [x] **Step 8: Add browser-verifiable reading selection behavior**
 
 Modify `ReadingPage.tsx` so that when the browser selection is inside the passage and the selected text is non-empty:
 
@@ -2378,7 +2378,7 @@ Modify `ReadingPage.tsx` so that when the browser selection is inside the passag
 - Clicking `Generate card` builds the deterministic draft.
 - `GeneratedCardDraftSheet` opens.
 
-- [ ] **Step 9: Run tests and build**
+- [x] **Step 9: Run tests and build**
 
 Run:
 
@@ -2389,7 +2389,7 @@ corepack pnpm --filter @art/web build
 
 Expected: tests and build pass.
 
-- [ ] **Step 10: Browser verify**
+- [x] **Step 10: Browser verify**
 
 Open `http://localhost:5173`.
 
@@ -2400,7 +2400,7 @@ Verify:
 - Generated draft shows metadata and explanation.
 - Accepting the draft adds it to Review/Cards.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 Run:
 
