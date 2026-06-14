@@ -30,4 +30,11 @@ describe("database schema", () => {
     expect(schema).toContain("previous_interval_days");
     expect(schema).toContain("next_interval_days");
   });
+
+  it("supports manual selection AI generation", () => {
+    expect(schema).toContain("create table ai_generation_jobs");
+    expect(schema).toContain("manual_selection");
+    expect(schema).toContain("client_operation_id");
+    expect(schema).toContain("model_provider");
+  });
 });

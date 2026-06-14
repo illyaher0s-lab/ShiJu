@@ -123,3 +123,21 @@ export interface ClientOperation {
   syncStatus: "pending" | "synced" | "failed";
   serverAppliedAt: string | null;
 }
+
+export interface ManualSelectionGenerationRequest {
+  clientOperationId: string;
+  userId: string;
+  articleId: string;
+  segmentId: string;
+  selectedText: string;
+  sentence: string;
+  context: string;
+  clientCreatedAt: string;
+}
+
+export interface ManualSelectionGenerationDraft {
+  candidate: CandidateExpression;
+  duplicateExpressionSenseId: string | null;
+  recommendation: "add" | "merge" | "reject";
+  recommendationReason: string;
+}
