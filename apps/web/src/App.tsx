@@ -6,9 +6,10 @@ import type {
   ReadingFeedback,
   ReviewFeedback,
 } from "@art/domain";
-import { BookMarked, BookOpen, Files, RotateCcw } from "lucide-react";
+import { BookMarked, BookOpen, Files, Home, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { CardLibraryPage } from "./features/cards/CardLibraryPage";
+import { HomePage } from "./features/home/HomePage";
 import { ImportPage } from "./features/import/ImportPage";
 import { ReadingPage } from "./features/reading/ReadingPage";
 import { ReviewPage } from "./features/review/ReviewPage";
@@ -17,7 +18,7 @@ import { sampleCandidates, sampleExpressionSenses, sampleOccurrences, sampleSegm
 import { addRecord } from "./storage/db";
 import { createClientOperation } from "./storage/operationQueue";
 
-type Tab = "read" | "review" | "cards" | "articles";
+type Tab = "home" | "read" | "review" | "cards" | "articles";
 
 const senseByCandidateId: Record<string, string> = {
   "candidate-roll-out": "sense-roll-out",
@@ -25,13 +26,16 @@ const senseByCandidateId: Record<string, string> = {
 };
 
 export function App() {
-  const [tab, setTab] = useState<Tab>("read");
+  const [tab, setTab] = useState<Tab>("home");
   const [reviewState, setReviewState] = useState<ReviewState>({
     expressions: sampleExpressionSenses,
     activeReviewIds: ["sense-pick-up-steam"]
   });
   const [occurrences, setOccurrences] = useState<Occurrence[]>(sampleOccurrences);
   const [pendingOperations, setPendingOperations] = useState<ClientOperation[]>([]);
+  const [newCardTarget, setNewCardTarget] = useState(6);
+  const [reviewTarget, setReviewTarget] = useState(12);
+  const [completedReviewsToday, setCompletedReviewsToday] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
 
   function addToReview(candidate: CandidateExpression) {
@@ -82,6 +86,7 @@ export function App() {
       payload: { feedback, reviewedAt: at },
     });
     setReviewState((current) => applyReviewAction(current, { source: "review", expressionSenseId, feedback, at }));
+    setCompletedReviewsToday((current) => current + 1);
   }
 
   function enqueuePendingOperation(input: {
@@ -107,10 +112,18 @@ export function App() {
   return (
     <div className="appShell">
       <div className="phoneFrame">
-        {pendingOperations.length > 0 ? (
-          <div className="syncStatus" role="status" aria-label={`Pending sync: ${pendingOperations.length}`}>
-            Pending sync: {pendingOperations.length}
-          </div>
+        {tab === "home" ? (
+          <HomePage
+            newCardsToday={pendingOperations.filter((operation) => operation.operationType === "reading.add_to_review").length}
+            completedReviewsToday={completedReviewsToday}
+            dueReviewCount={reviewState.activeReviewIds?.length ?? 0}
+            newCardTarget={newCardTarget}
+            reviewTarget={reviewTarget}
+            pendingSyncCount={pendingOperations.length}
+            onNewCardTargetChange={setNewCardTarget}
+            onReviewTargetChange={setReviewTarget}
+            onNavigate={setTab}
+          />
         ) : null}
         {tab === "read" ? (
           <ReadingPage
@@ -139,6 +152,10 @@ export function App() {
 
         {toast ? <p className="toast">{toast}</p> : null}
         <nav className="tabs" aria-label="Primary">
+          <button className={tab === "home" ? "active" : ""} type="button" onClick={() => setTab("home")}>
+            <Home size={18} />
+            Home
+          </button>
           <button className={tab === "read" ? "active" : ""} type="button" onClick={() => setTab("read")}>
             <BookOpen size={18} />
             Read
