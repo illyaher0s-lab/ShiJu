@@ -1968,7 +1968,7 @@ Expected: commit succeeds.
 - Create: `apps/web/src/features/cards/CardLibraryPage.test.tsx`
 - Modify: `apps/web/src/features/review/ReviewPage.test.tsx`
 
-- [ ] **Step 1: Add failing review card behavior test**
+- [x] **Step 1: Add failing review card behavior test**
 
 Create or update `apps/web/src/features/review/ReviewPage.test.tsx`:
 
@@ -2006,7 +2006,7 @@ describe("ReviewPage", () => {
 });
 ```
 
-- [ ] **Step 2: Run review test and verify it fails**
+- [x] **Step 2: Run review test and verify it fails**
 
 Run:
 
@@ -2016,7 +2016,7 @@ corepack pnpm --filter @art/web test -- src/features/review/ReviewPage.test.tsx
 
 Expected: fails because rich answer labels are not rendered yet.
 
-- [ ] **Step 3: Implement richer review answer surface**
+- [x] **Step 3: Implement richer review answer surface**
 
 Modify `ReviewPage.tsx` so the hidden answer reveals:
 
@@ -2031,7 +2031,7 @@ Modify `ReviewPage.tsx` so the hidden answer reveals:
 
 Keep the recall prompt compact before the answer is revealed.
 
-- [ ] **Step 4: Add failing card library test**
+- [x] **Step 4: Add failing card library test**
 
 Create `apps/web/src/features/cards/CardLibraryPage.test.tsx`:
 
@@ -2065,7 +2065,7 @@ describe("CardLibraryPage", () => {
 });
 ```
 
-- [ ] **Step 5: Run card library test and verify it fails**
+- [x] **Step 5: Run card library test and verify it fails**
 
 Run:
 
@@ -2075,7 +2075,7 @@ corepack pnpm --filter @art/web test -- src/features/cards/CardLibraryPage.test.
 
 Expected: fails because `CardLibraryPage` does not exist.
 
-- [ ] **Step 6: Implement card library UI**
+- [x] **Step 6: Implement card library UI**
 
 Create:
 
@@ -2084,7 +2084,7 @@ Create:
 
 The page must list `ExpressionSense`, not sentence cards.
 
-- [ ] **Step 7: Wire app navigation**
+- [x] **Step 7: Wire app navigation**
 
 Modify `App.tsx` so the bottom navigation has four tabs:
 
@@ -2095,7 +2095,7 @@ Modify `App.tsx` so the bottom navigation has four tabs:
 
 The current static `Library` page becomes the article/import area.
 
-- [ ] **Step 8: Run web tests and build**
+- [x] **Step 8: Run web tests and build**
 
 Run:
 
@@ -2106,7 +2106,7 @@ corepack pnpm --filter @art/web build
 
 Expected: tests and build pass.
 
-- [ ] **Step 9: Browser verify**
+- [x] **Step 9: Browser verify**
 
 Open `http://localhost:5173`.
 
@@ -2117,7 +2117,7 @@ Verify:
 - Card detail shows occurrence evidence.
 - Article library/import area remains separate from card library.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 Run:
 
