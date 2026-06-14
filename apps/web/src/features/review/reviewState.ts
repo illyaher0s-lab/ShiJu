@@ -1,4 +1,10 @@
-import { applyReviewFeedback, type ExpressionSense, type ReadingFeedback, type ReviewFeedback } from "@art/domain";
+import {
+  applyReviewFeedback,
+  type ExpressionSense,
+  type ReadingFeedback,
+  type ReviewFeedback,
+  type ReviewMasteryAction,
+} from "@art/domain";
 
 export interface ReviewState {
   expressions: ExpressionSense[];
@@ -23,6 +29,12 @@ type ReviewAction =
       expressionSenseId: string;
       feedback: "add_to_review";
       at: string;
+    }
+  | {
+      source: "review";
+      expressionSenseId: string;
+      action: ReviewMasteryAction;
+      at: string;
     };
 
 export function applyReviewAction(state: ReviewState, action: ReviewAction): ReviewState {
@@ -36,12 +48,28 @@ export function applyReviewAction(state: ReviewState, action: ReviewAction): Rev
     return { ...state, activeReviewIds: [...activeReviewIds] };
   }
 
-  return {
-    ...state,
-    expressions: state.expressions.map((expression) =>
-      expression.id === action.expressionSenseId
-        ? applyReviewFeedback(expression, action.feedback, action.at).next
-        : expression
-    )
-  };
+  if ("action" in action && action.action === "mark_mastered") {
+    return {
+      ...state,
+      activeReviewIds: (state.activeReviewIds ?? []).filter((id) => id !== action.expressionSenseId),
+      expressions: state.expressions.map((expression) =>
+        expression.id === action.expressionSenseId
+          ? { ...expression, masteryStatus: "mastered", srsDueAt: null, updatedAt: action.at }
+          : expression
+      ),
+    };
+  }
+
+  if ("feedback" in action) {
+    return {
+      ...state,
+      expressions: state.expressions.map((expression) =>
+        expression.id === action.expressionSenseId
+          ? applyReviewFeedback(expression, action.feedback, action.at).next
+          : expression
+      )
+    };
+  }
+
+  return state;
 }

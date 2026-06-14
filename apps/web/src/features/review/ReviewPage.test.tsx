@@ -1,11 +1,14 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { sampleExpressionSenses, sampleOccurrences } from "../../fixtures/sampleSegment";
 import { ReviewPage } from "./ReviewPage";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 describe("ReviewPage", () => {
   it("keeps learning details hidden until answer reveal", async () => {
@@ -31,5 +34,48 @@ describe("ReviewPage", () => {
     expect(screen.getByText("Another example")).toBeInTheDocument();
     expect(screen.queryByText("Usage hint")).not.toBeInTheDocument();
     expect(screen.getByText("Source")).toBeInTheDocument();
+  });
+
+  it("shows Chinese color-coded review feedback buttons", () => {
+    render(
+      <ReviewPage
+        expressions={sampleExpressionSenses}
+        occurrences={sampleOccurrences}
+        activeReviewIds={["sense-roll-out"]}
+        onReview={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "涓嶇煡閬揱" })).toHaveClass("feedbackUnknown");
+    expect(screen.getByRole("button", { name: "杩锋儜" })).toHaveClass("feedbackFuzzy");
+    expect(screen.getByRole("button", { name: "鐭ラ亾" })).toHaveClass("feedbackKnown");
+  });
+
+  it("reveals a mastered action after long-pressing known", async () => {
+    vi.useFakeTimers();
+    const onMarkMastered = vi.fn();
+
+    render(
+      <ReviewPage
+        expressions={sampleExpressionSenses}
+        occurrences={sampleOccurrences}
+        activeReviewIds={["sense-roll-out"]}
+        onReview={vi.fn()}
+        onMarkMastered={onMarkMastered}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "鐔熺煡" })).not.toBeInTheDocument();
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "鐭ラ亾" }));
+    act(() => {
+      vi.advanceTimersByTime(650);
+    });
+    fireEvent.pointerUp(screen.getByRole("button", { name: "鐭ラ亾" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "鐔熺煡" }));
+
+    expect(onMarkMastered).toHaveBeenCalledWith("sense-roll-out", "2026-06-13T00:00:00.000Z");
+    vi.useRealTimers();
   });
 });

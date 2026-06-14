@@ -329,6 +329,35 @@ dd {
   margin-top: 16px;
 }
 
+.feedbackUnknown {
+  border-color: #fecaca !important;
+  background: #fef2f2 !important;
+  color: #b42318 !important;
+}
+
+.feedbackFuzzy {
+  border-color: #fde68a !important;
+  background: #fffbeb !important;
+  color: #a16207 !important;
+}
+
+.feedbackKnown {
+  border-color: #bbf7d0 !important;
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+}
+
+.masteredAction {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 8px;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #15803d;
+  font-weight: 800;
+}
+
 .reviewEmpty {
   display: grid;
   align-content: center;

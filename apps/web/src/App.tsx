@@ -89,6 +89,18 @@ export function App() {
     setCompletedReviewsToday((current) => current + 1);
   }
 
+  function markMastered(expressionSenseId: string, at: string) {
+    enqueuePendingOperation({
+      operationType: "review.mark_mastered",
+      targetType: "expression_sense",
+      targetId: expressionSenseId,
+      payload: { masteredAt: at },
+    });
+    setReviewState((current) =>
+      applyReviewAction(current, { source: "review", expressionSenseId, action: "mark_mastered", at })
+    );
+  }
+
   function enqueuePendingOperation(input: {
     operationType: string;
     targetType: string;
@@ -139,6 +151,7 @@ export function App() {
             occurrences={occurrences}
             activeReviewIds={reviewState.activeReviewIds ?? []}
             onReview={reviewFeedback}
+            onMarkMastered={markMastered}
           />
         ) : null}
         {tab === "cards" ? (

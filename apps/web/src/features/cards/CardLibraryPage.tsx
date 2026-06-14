@@ -50,22 +50,24 @@ export function CardLibraryPage({ expressions, occurrences, onAddContextDraft }:
       </label>
 
       <div className="cardList">
-        {filtered.map((expression) => (
-          <button
-            className="cardLibraryItem"
-            key={expression.id}
-            type="button"
-            onClick={() => setSelectedId(expression.id)}
-          >
-            <span>
-              <strong>{expression.expression}</strong>
-              <small>{expression.type.replaceAll("_", " ")} · {expression.meaningZh}</small>
-            </span>
-            <span className={isDue(expression.srsDueAt, now) ? "dueBadge" : "quietBadge"}>
-              {isDue(expression.srsDueAt, now) ? "due" : expression.masteryStatus}
-            </span>
-          </button>
-        ))}
+        {filtered.map((expression) => {
+          const due = expression.masteryStatus !== "mastered" && isDue(expression.srsDueAt, now);
+
+          return (
+            <button
+              className="cardLibraryItem"
+              key={expression.id}
+              type="button"
+              onClick={() => setSelectedId(expression.id)}
+            >
+              <span>
+                <strong>{expression.expression}</strong>
+                <small>{expression.type.replaceAll("_", " ")} · {expression.meaningZh}</small>
+              </span>
+              <span className={due ? "dueBadge" : "quietBadge"}>{due ? "due" : expression.masteryStatus}</span>
+            </button>
+          );
+        })}
       </div>
 
       {selected ? (

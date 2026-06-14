@@ -1,6 +1,6 @@
 import type { ExpressionSense, Occurrence, ReviewFeedback } from "@art/domain";
 import { Eye, RotateCcw } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { isDue, nowIso } from "../../lib/date";
 
 interface ReviewPageProps {
@@ -8,11 +8,14 @@ interface ReviewPageProps {
   occurrences: Occurrence[];
   activeReviewIds: string[];
   onReview: (expressionSenseId: string, feedback: ReviewFeedback, at: string) => void;
+  onMarkMastered?: (expressionSenseId: string, at: string) => void;
 }
 
-export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview }: ReviewPageProps) {
+export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview, onMarkMastered }: ReviewPageProps) {
   const [answerVisible, setAnswerVisible] = useState(false);
   const [reviewedMessage, setReviewedMessage] = useState<string | null>(null);
+  const [masteredVisible, setMasteredVisible] = useState(false);
+  const longPressTimer = useRef<number | null>(null);
   const now = nowIso();
   const due = useMemo(
     () => expressions.filter((expression) => activeReviewIds.includes(expression.id) && isDue(expression.srsDueAt, now)),
@@ -37,6 +40,33 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
     onReview(current.id, feedback, "2026-06-13T00:00:00.000Z");
     setReviewedMessage(`Review feedback changed the SRS interval for ${current.expression}.`);
     setAnswerVisible(false);
+    setMasteredVisible(false);
+  }
+
+  function startKnownPress() {
+    clearKnownPress();
+    longPressTimer.current = window.setTimeout(() => {
+      setMasteredVisible(true);
+    }, 600);
+  }
+
+  function clearKnownPress() {
+    if (longPressTimer.current === null) return;
+    window.clearTimeout(longPressTimer.current);
+    longPressTimer.current = null;
+  }
+
+  function submitKnown() {
+    if (masteredVisible) return;
+    submit("known");
+  }
+
+  function markMastered() {
+    if (!current || !onMarkMastered) return;
+    onMarkMastered(current.id, "2026-06-13T00:00:00.000Z");
+    setReviewedMessage(`${current.expression} marked as mastered.`);
+    setAnswerVisible(false);
+    setMasteredVisible(false);
   }
 
   return (
@@ -99,16 +129,29 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
         )}
 
         <div className="reviewActions">
-          <button type="button" onClick={() => submit("unknown")}>
-            Unknown
+          <button className="feedbackUnknown" type="button" onClick={() => submit("unknown")}>
+            涓嶇煡閬揱
           </button>
-          <button type="button" onClick={() => submit("fuzzy")}>
-            Fuzzy
+          <button className="feedbackFuzzy" type="button" onClick={() => submit("fuzzy")}>
+            杩锋儜
           </button>
-          <button type="button" onClick={() => submit("known")}>
-            Known
+          <button
+            className="feedbackKnown"
+            type="button"
+            onClick={submitKnown}
+            onPointerCancel={clearKnownPress}
+            onPointerDown={startKnownPress}
+            onPointerLeave={clearKnownPress}
+            onPointerUp={clearKnownPress}
+          >
+            鐭ラ亾
           </button>
         </div>
+        {masteredVisible && onMarkMastered ? (
+          <button className="masteredAction" type="button" onClick={markMastered}>
+            鐔熺煡
+          </button>
+        ) : null}
         <p className="reviewNote">Only review feedback changes SRS. Reading taps do not advance intervals.</p>
       </section>
     </main>

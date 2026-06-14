@@ -1,10 +1,11 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
 afterEach(() => {
+  vi.useRealTimers();
   cleanup();
 });
 
@@ -57,5 +58,27 @@ describe("App", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Home" }));
     expect(screen.getByRole("status", { name: "Pending sync: 1" })).toBeInTheDocument();
+  });
+
+  it("marks a review card as mastered while keeping it in the card library", async () => {
+    vi.useFakeTimers();
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Review due cards" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "鐭ラ亾" }));
+    act(() => {
+      vi.advanceTimersByTime(650);
+    });
+    fireEvent.pointerUp(screen.getByRole("button", { name: "鐭ラ亾" }));
+    fireEvent.click(screen.getByRole("button", { name: "鐔熺煡" }));
+
+    expect(screen.getByRole("heading", { name: "Review queue clear" })).toBeInTheDocument();
+
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("button", { name: "Cards" }));
+
+    expect(screen.getByRole("button", { name: /pick up steam/i })).toBeInTheDocument();
+    expect(screen.getByText("mastered")).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });

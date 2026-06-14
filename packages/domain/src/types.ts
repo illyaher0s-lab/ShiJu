@@ -6,6 +6,7 @@ export type MasteryStatus = "new" | "learning" | "review" | "mastered";
 export type GenerationStatus = "not_generated" | "generating" | "generated" | "failed" | "retryable";
 export type ReadingFeedback = "add_to_review" | "known" | "too_easy" | "bad_explanation";
 export type ReviewFeedback = "known" | "fuzzy" | "unknown";
+export type ReviewMasteryAction = "mark_mastered";
 
 export interface Article {
   id: string;
