@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-06-14  
 **Branch**: `codex/ai-reading-trainer-roadmap`  
-**Current Phase**: MVP Implementation (Backend AI Contract Layer)
+**Current Phase**: MVP Implementation (Backend AI Contract Layer Complete)
 
 ---
 
@@ -154,6 +154,25 @@ Building a mobile-first English reading trainer with inline learning and spaced 
 - `apps/api/src/db/schema.test.ts`: added manual selection verification test
 - **Boundary respected**: mock provider only, no real LLM calls, no server deployment
 
+### ✅ Task 16: Add Context-Entry AI Card Generation Mock Flow
+- Commit: `feat: add context card generation mock` (78442f3, previously completed)
+- `apps/web/src/features/cards/contextGeneration.ts`: buildContextEntryDraft (deterministic for "buff" in "game")
+- `apps/web/src/features/cards/ContextCardGenerator.tsx`: form for expression + context + note
+- `apps/web/src/features/cards/CardLibraryPage.tsx`: ContextCardGenerator integrated at top
+- `apps/web/src/App.tsx`: wired to create context-entry occurrences
+- Browser verified: enter "buff" + "game" → Generate card → draft shows metadata → accept adds to Cards/Review
+
+### ✅ Task 17: Add Backend Context-Entry AI Contract
+- Commit: `feat: add context card generation contract` (aa19b25)
+- `packages/domain/src/types.ts`: ContextEntryGenerationRequest, ContextEntryGenerationDraft
+- `apps/api/src/ai/provider.ts`: generateContextEntryDraft() method added
+- `apps/api/src/ai/mockProvider.ts`: deterministic mock for "buff" + "game", fallback for others
+- `apps/api/src/services/contextGenerationService.ts`: validates expression and contextLabel, calls provider
+- `apps/api/src/routes/contextGeneration.ts`: POST /cards/context/generate
+- `apps/api/src/db/schema.sql`: already supports context_entry in occurrences and ai_generation_jobs
+- `apps/api/src/db/schema.test.ts`: added context-entry verification test
+- **Boundary respected**: mock provider only, no real LLM calls, no server deployment
+
 ---
 
 ## Current State
@@ -165,26 +184,23 @@ Building a mobile-first English reading trainer with inline learning and spaced 
 - ✅ Card library with occurrence evidence
 - ✅ Article import entry point (fixture mode)
 - ✅ Manual selection mock flow (frontend + backend contract)
+- ✅ Context-entry card generation mock flow (frontend + backend contract)
 - ✅ Backend API skeleton with mock providers
 - ✅ PostgreSQL schema defined
 - ✅ IndexedDB operation queue
 - ✅ Sync API contract (idempotent)
-- ✅ Manual selection AI generation contract (backend mock only)
+- ✅ All three AI generation paths: segment preselection, manual selection, context-entry
 
 ### What Doesn't Work Yet
 - ❌ Real file parsing (TXT/Markdown)
 - ❌ Real AI generation (LLM calls)
 - ❌ Real PostgreSQL persistence
 - ❌ Real IndexedDB sync
-- ❌ Context-entry AI card generation (Task 16)
 - ❌ Authentication
 - ❌ Server deployment
 
 ### Next Task
-**Task 16: Add Context-Entry AI Card Generation Mock Flow**
-- Frontend: form for expression + context + note → generate draft
-- Backend contract: POST /context-entry/generate
-- Mock provider: deterministic for "buff" in "game" context
+Check implementation plan for remaining tasks (Task 18+)
 
 ---
 
@@ -281,8 +297,8 @@ Building a mobile-first English reading trainer with inline learning and spaced 
 │       ├── src/
 │       │   ├── ai/              # provider.ts, mockProvider.ts, openAiCompatibleProvider.ts
 │       │   ├── db/              # schema.sql, client.ts
-│       │   ├── routes/          # articles.ts, review.ts, sync.ts, manualSelection.ts
-│       │   ├── services/        # segmentationService.ts, generationService.ts, srsService.ts, syncService.ts, manualSelectionService.ts
+│       │   ├── routes/          # articles.ts, review.ts, sync.ts, manualSelection.ts, contextGeneration.ts
+│       │   ├── services/        # segmentationService.ts, generationService.ts, srsService.ts, syncService.ts, manualSelectionService.ts, contextGenerationService.ts
 │       │   ├── app.ts
 │       │   ├── server.ts
 │       │   └── config.ts
@@ -339,7 +355,10 @@ pnpm test:domain       # Domain only
 
 ## Commit History (Recent)
 
+- `aa19b25` - feat: add context card generation contract (Task 17)
+- `64a06d9` - docs: add project status and decision log
 - `04abf61` - feat: add manual selection ai generation contract (Task 15)
+- `78442f3` - feat: add context card generation mock (Task 16)
 - `12c2ae2` - feat: polish review feedback and mastered action (Task 19)
 - `7746ed1` - feat: add learning home dashboard (Task 18)
 - `0778c06` - feat: upgrade srs scheduling (Task 20)
@@ -355,10 +374,9 @@ None currently blocking. Tests pass, browser verification succeeds for completed
 
 ## Next Steps
 
-1. **Complete Task 16**: Context-entry AI card generation mock flow
-2. **Complete Task 17**: Context-entry backend contract
-3. **Local verification checkpoint**: Run full test suite + browser smoke test
-4. **Server agent handoff**: When ready to connect real LLM APIs and deploy
+1. **Check implementation plan**: Review `docs/superpowers/plans/2026-06-13-ai-reading-trainer-mvp-implementation.md` for remaining tasks after Task 17
+2. **Local verification checkpoint**: Run full test suite + browser smoke test before moving to next phase
+3. **Server agent handoff**: When ready to connect real LLM APIs and deploy
 
 ---
 
