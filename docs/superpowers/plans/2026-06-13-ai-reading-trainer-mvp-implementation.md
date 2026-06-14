@@ -2141,7 +2141,7 @@ Expected: commit succeeds.
 - Create: `apps/web/src/features/import/ImportPage.test.tsx`
 - Modify: `apps/web/src/styles.css`
 
-- [ ] **Step 1: Add failing import UI test**
+- [x] **Step 1: Add failing import UI test**
 
 Create `apps/web/src/features/import/ImportPage.test.tsx`:
 
@@ -2164,7 +2164,7 @@ describe("ImportPage", () => {
 });
 ```
 
-- [ ] **Step 2: Run import test and verify it fails**
+- [x] **Step 2: Run import test and verify it fails**
 
 Run:
 
@@ -2174,7 +2174,7 @@ corepack pnpm --filter @art/web test -- src/features/import/ImportPage.test.tsx
 
 Expected: fails because the import input is not present.
 
-- [ ] **Step 3: Implement fixture-mode import UI**
+- [x] **Step 3: Implement fixture-mode import UI**
 
 Modify `ImportPage.tsx` to show:
 
@@ -2185,7 +2185,7 @@ Modify `ImportPage.tsx` to show:
 
 This task does not parse real files yet. It makes the V1 import affordance visible before backend import exists.
 
-- [ ] **Step 4: Run tests and build**
+- [x] **Step 4: Run tests and build**
 
 Run:
 
@@ -2196,7 +2196,7 @@ corepack pnpm --filter @art/web build
 
 Expected: tests and build pass.
 
-- [ ] **Step 5: Browser verify**
+- [x] **Step 5: Browser verify**
 
 Open `http://localhost:5173` and go to Articles.
 
@@ -2206,7 +2206,7 @@ Verify:
 - It is clear that first segment generation is prioritized.
 - The static sample article is still available.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
