@@ -1,5 +1,5 @@
 import { appearsInMoreExpressions, type CandidateExpression, type ReadingFeedback, type Segment } from "@art/domain";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { renderHighlightedText } from "../../lib/highlightText";
 import { ExpressionSheet } from "./ExpressionSheet";
@@ -9,12 +9,15 @@ import { SelectionToolbar } from "./SelectionToolbar";
 
 interface ReadingPageProps {
   segment: Segment;
+  segments?: Segment[]; // All segments for navigation
   candidates: CandidateExpression[];
   onAddToReview: (candidate: CandidateExpression) => void;
   onReadingFeedback: (candidate: CandidateExpression, feedback: Exclude<ReadingFeedback, "add_to_review">) => void;
+  onSegmentChange?: (segmentId: string) => void;
+  onGenerateCards?: (segmentId: string) => void;
 }
 
-export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedback }: ReadingPageProps) {
+export function ReadingPage({ segment, segments, candidates, onAddToReview, onReadingFeedback, onSegmentChange, onGenerateCards }: ReadingPageProps) {
   const passageRef = useRef<HTMLElement | null>(null);
   const [selected, setSelected] = useState<CandidateExpression | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -25,6 +28,31 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
     [candidates]
   );
   const moreCandidates = candidates.filter((candidate) => appearsInMoreExpressions(candidate.candidateStatus));
+
+  // Segment navigation
+  const currentIndex = segments?.findIndex(s => s.id === segment.id) ?? -1;
+  const hasPrevious = currentIndex > 0;
+  const hasNext = segments && currentIndex >= 0 && currentIndex < segments.length - 1;
+  const totalSegments = segments?.length ?? 1;
+  const segmentNumber = currentIndex >= 0 ? currentIndex + 1 : 1;
+
+  function goToPrevious() {
+    if (hasPrevious && segments && onSegmentChange) {
+      onSegmentChange(segments[currentIndex - 1]!.id);
+    }
+  }
+
+  function goToNext() {
+    if (hasNext && segments && onSegmentChange) {
+      onSegmentChange(segments[currentIndex + 1]!.id);
+    }
+  }
+
+  function handleGenerateCards() {
+    if (onGenerateCards) {
+      onGenerateCards(segment.id);
+    }
+  }
 
   useEffect(() => {
     function captureManualSelection() {
@@ -76,8 +104,29 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
   return (
     <main className="screen">
       <section className="readingHeader">
-        <p>Fixture segment</p>
+        <p>Segment {segmentNumber} / {totalSegments}</p>
         <h1>Read first, learn in place</h1>
+        {segment.generationStatus === "not_generated" && (
+          <div className="generationStatus notGenerated">
+            <AlertCircle size={14} />
+            Cards not generated
+          </div>
+        )}
+        {segment.generationStatus === "generating" && (
+          <div className="generationStatus generating">
+            Generating cards...
+          </div>
+        )}
+        {segment.generationStatus === "generated" && (
+          <div className="generationStatus generated">
+            Cards ready
+          </div>
+        )}
+        {segment.generationStatus === "not_generated" && onGenerateCards && (
+          <button className="generateButton" type="button" onClick={handleGenerateCards}>
+            Generate cards for this segment
+          </button>
+        )}
       </section>
 
       <article
@@ -115,6 +164,30 @@ export function ReadingPage({ segment, candidates, onAddToReview, onReadingFeedb
           </div>
         ) : null}
       </section>
+
+      {segments && segments.length > 1 && (
+        <nav className="segmentNavigation">
+          <button 
+            className="segmentNavButton" 
+            type="button" 
+            disabled={!hasPrevious}
+            onClick={goToPrevious}
+          >
+            <ChevronLeft size={16} />
+            Previous
+          </button>
+          <span className="segmentProgress">{segmentNumber} / {totalSegments}</span>
+          <button 
+            className="segmentNavButton" 
+            type="button" 
+            disabled={!hasNext}
+            onClick={goToNext}
+          >
+            Next
+            <ChevronRight size={16} />
+          </button>
+        </nav>
+      )}
 
       {selectedText && !generatedDraft ? (
         <SelectionToolbar selectedText={selectedText} onGenerate={generateDraft} />

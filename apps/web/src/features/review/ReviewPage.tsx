@@ -134,10 +134,10 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
 
         <div className="reviewActions">
           <button className="feedbackUnknown" type="button" onClick={() => submit("unknown")}>
-            涓嶇煡閬揱
+            不知道
           </button>
           <button className="feedbackFuzzy" type="button" onClick={() => submit("fuzzy")}>
-            杩锋儜
+            迷惑
           </button>
           <button
             className="feedbackKnown"
@@ -148,12 +148,12 @@ export function ReviewPage({ expressions, occurrences, activeReviewIds, onReview
             onPointerLeave={clearKnownPress}
             onPointerUp={clearKnownPress}
           >
-            鐭ラ亾
+            知道
           </button>
         </div>
         {masteredVisible && onMarkMastered ? (
           <button className="masteredAction" type="button" onClick={markMastered}>
-            鐔熺煡
+            熟知
           </button>
         ) : null}
         <p className="reviewNote">Only review feedback changes SRS. Reading taps do not advance intervals.</p>

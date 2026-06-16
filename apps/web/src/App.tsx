@@ -1,16 +1,19 @@
 import type {
+  Article,
   CandidateExpression,
   ClientOperation,
   ExpressionSense,
   Occurrence,
   ReadingFeedback,
   ReviewFeedback,
+  Segment,
 } from "@art/domain";
 import { BookMarked, BookOpen, Files, Home, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import { ArticleListPage } from "./features/articles/ArticleListPage";
+import { ArticleDetailPage } from "./features/articles/ArticleDetailPage";
 import { CardLibraryPage } from "./features/cards/CardLibraryPage";
 import { HomePage } from "./features/home/HomePage";
-import { ImportPage } from "./features/import/ImportPage";
 import { ReadingPage } from "./features/reading/ReadingPage";
 import { ReviewPage } from "./features/review/ReviewPage";
 import { applyReviewAction, type ReviewState } from "./features/review/reviewState";
@@ -18,7 +21,7 @@ import { sampleCandidates, sampleExpressionSenses, sampleOccurrences, sampleSegm
 import { addRecord } from "./storage/db";
 import { createClientOperation } from "./storage/operationQueue";
 
-type Tab = "home" | "read" | "review" | "cards" | "articles";
+type Tab = "home" | "read" | "review" | "cards" | "articles" | "article-detail";
 
 const senseByCandidateId: Record<string, string> = {
   "candidate-roll-out": "sense-roll-out",
@@ -37,6 +40,62 @@ export function App() {
   const [reviewTarget, setReviewTarget] = useState(12);
   const [completedReviewsToday, setCompletedReviewsToday] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  
+  // Real data from backend (fallback to sample if empty)
+  const [importedArticle, setImportedArticle] = useState<Article | null>(null);
+  const [importedSegments, setImportedSegments] = useState<Segment[]>([]);
+  const [importedCandidates, setImportedCandidates] = useState<CandidateExpression[]>([]);
+  
+  // Article list navigation
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
+  
+  const activeSegment = selectedSegmentId && importedSegments.length > 0
+    ? importedSegments.find(s => s.id === selectedSegmentId) || importedSegments[0]!
+    : importedSegments.length > 0 
+      ? importedSegments[0]! 
+      : sampleSegment;
+  
+  const activeCandidates = selectedSegmentId && importedCandidates.length > 0
+    ? importedCandidates.filter(c => c.segmentId === selectedSegmentId)
+    : importedCandidates.length > 0 
+      ? importedCandidates 
+      : sampleCandidates;
+
+  function handleArticleImported(article: Article, segments: Segment[], candidates: CandidateExpression[]) {
+    setImportedArticle(article);
+    setImportedSegments(segments);
+    setImportedCandidates(candidates);
+    setSelectedSegmentId(segments[0]?.id || null);
+    setTab("read"); // Switch to reading page
+    setToast("Article imported successfully!");
+  }
+
+  function handleArticleSelected(articleId: string) {
+    setSelectedArticleId(articleId);
+    setTab("article-detail");
+  }
+
+  function handleSegmentSelected(segmentId: string, segments: Segment[], candidates: CandidateExpression[]) {
+    setImportedSegments(segments);
+    setImportedCandidates(candidates);
+    setSelectedSegmentId(segmentId);
+    setTab("read");
+  }
+
+  function handleSegmentChange(segmentId: string) {
+    setSelectedSegmentId(segmentId);
+  }
+
+  function handleGenerateCards(segmentId: string) {
+    setToast(`Generating cards for segment ${segmentId}...`);
+    // TODO: trigger backend card generation
+  }
+
+  function handleBackToArticleList() {
+    setSelectedArticleId(null);
+    setTab("articles");
+  }
 
   function addToReview(candidate: CandidateExpression) {
     const expressionSenseId =
@@ -139,10 +198,13 @@ export function App() {
         ) : null}
         {tab === "read" ? (
           <ReadingPage
-            segment={sampleSegment}
-            candidates={sampleCandidates}
+            segment={activeSegment}
+            segments={importedSegments.length > 0 ? importedSegments : undefined}
+            candidates={activeCandidates}
             onAddToReview={addToReview}
             onReadingFeedback={readingFeedback}
+            onSegmentChange={handleSegmentChange}
+            onGenerateCards={handleGenerateCards}
           />
         ) : null}
         {tab === "review" ? (
@@ -161,7 +223,14 @@ export function App() {
             onAddContextDraft={addToReview}
           />
         ) : null}
-        {tab === "articles" ? <ImportPage /> : null}
+        {tab === "articles" ? <ArticleListPage onArticleSelected={handleArticleSelected} onArticleImported={handleArticleImported} /> : null}
+        {tab === "article-detail" && selectedArticleId ? (
+          <ArticleDetailPage 
+            articleId={selectedArticleId} 
+            onSegmentSelected={handleSegmentSelected}
+            onBack={handleBackToArticleList}
+          />
+        ) : null}
 
         {toast ? <p className="toast">{toast}</p> : null}
         <nav className="tabs" aria-label="Primary">

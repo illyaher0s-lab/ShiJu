@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  base: '/shiju/',
   plugins: [
     react(),
     VitePWA({
@@ -11,7 +12,7 @@ export default defineConfig({
         name: "AI Reading Trainer",
         short_name: "Reading Trainer",
         display: "standalone",
-        start_url: "/",
+        start_url: "/shiju/",
         theme_color: "#2563eb",
         background_color: "#f8fafc",
         icons: []

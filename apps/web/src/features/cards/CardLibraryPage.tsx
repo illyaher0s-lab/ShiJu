@@ -1,9 +1,10 @@
 import type { CandidateExpression, ExpressionSense, Occurrence } from "@art/domain";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { isDue, nowIso } from "../../lib/date";
 import { CardDetailSheet } from "./CardDetailSheet";
 import { ContextCardGenerator } from "./ContextCardGenerator";
+import { BottomActionButton } from "../../components/BottomActionButton";
 
 interface CardLibraryPageProps {
   expressions: ExpressionSense[];
@@ -14,6 +15,7 @@ interface CardLibraryPageProps {
 export function CardLibraryPage({ expressions, occurrences, onAddContextDraft }: CardLibraryPageProps) {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showGenerator, setShowGenerator] = useState(false);
   const now = nowIso();
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -29,14 +31,19 @@ export function CardLibraryPage({ expressions, occurrences, onAddContextDraft }:
     ? occurrences.filter((occurrence) => occurrence.expressionSenseId === selected.id)
     : [];
 
+  function handleAcceptDraft(draft: CandidateExpression) {
+    if (onAddContextDraft) {
+      onAddContextDraft(draft);
+    }
+    setShowGenerator(false);
+  }
+
   return (
     <main className="screen cardsScreen">
       <section className="readingHeader">
         <p>ExpressionSense</p>
         <h1>Card Library</h1>
       </section>
-
-      {onAddContextDraft ? <ContextCardGenerator onAccept={onAddContextDraft} /> : null}
 
       <label className="searchBox">
         <Search size={16} />
@@ -70,12 +77,33 @@ export function CardLibraryPage({ expressions, occurrences, onAddContextDraft }:
         })}
       </div>
 
+      {onAddContextDraft && (
+        <BottomActionButton onClick={() => setShowGenerator(true)} icon={<Plus size={16} />}>
+          Generate Card
+        </BottomActionButton>
+      )}
+
       {selected ? (
         <CardDetailSheet
           expression={selected}
           occurrences={selectedOccurrences}
           onClose={() => setSelectedId(null)}
         />
+      ) : null}
+
+      {showGenerator && onAddContextDraft ? (
+        <div className="modalOverlay" onClick={() => setShowGenerator(false)}>
+          <div className="modalContent" onClick={(e) => e.stopPropagation()}>
+            <ContextCardGenerator onAccept={handleAcceptDraft} />
+            <button 
+              className="modalCloseButton" 
+              type="button"
+              onClick={() => setShowGenerator(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
       ) : null}
     </main>
   );
