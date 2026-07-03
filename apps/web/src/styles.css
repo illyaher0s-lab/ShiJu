@@ -248,8 +248,10 @@ a:hover {
 /* Main Content Area */
 .main-content {
   flex: 1;
+  margin-left: 240px;
   padding: var(--space-4);
   overflow-y: auto;
+  min-height: 100vh;
 }
 
 /* Sidebar Styles (will be defined in Sidebar component) */
