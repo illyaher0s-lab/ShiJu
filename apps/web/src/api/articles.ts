@@ -126,3 +126,30 @@ export async function getReviewStats(): Promise<ReviewStats> {
   if (!response.ok) throw new Error('Failed to get review stats');
   return response.json();
 }
+
+// Expressions
+export async function listExpressions(filters?: {
+  status?: string;
+  search?: string;
+}): Promise<{
+  expressions: ExpressionSense[];
+  total: number;
+}> {
+  const params = new URLSearchParams();
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.search) params.append('search', filters.search);
+  
+  const url = `${API_BASE}/expressions${params.toString() ? '?' + params.toString() : ''}`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Failed to list expressions');
+  return response.json();
+}
+
+export async function getExpression(id: string): Promise<{
+  expression: ExpressionSense;
+  occurrences: any[];
+}> {
+  const response = await fetch(`${API_BASE}/expressions/${id}`);
+  if (!response.ok) throw new Error('Failed to get expression');
+  return response.json();
+}
