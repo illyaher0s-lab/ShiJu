@@ -1,23 +1,10 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   base: '/shiju/',
   plugins: [
-    react(),
-    VitePWA({
-      registerType: "autoUpdate",
-      manifest: {
-        name: "AI Reading Trainer",
-        short_name: "Reading Trainer",
-        display: "standalone",
-        start_url: "/shiju/",
-        theme_color: "#2563eb",
-        background_color: "#f8fafc",
-        icons: []
-      }
-    })
+    react()
   ],
   server: {
     port: 5173
