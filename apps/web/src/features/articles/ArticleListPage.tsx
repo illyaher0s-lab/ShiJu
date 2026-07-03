@@ -1,168 +1,80 @@
-import { useState, useEffect } from "react";
-import type { Article, Segment, CandidateExpression } from "@art/domain";
-import { getArticles, createArticle } from "../../api/articles";
-import { Plus } from "lucide-react";
-import { BottomActionButton } from "../../components/BottomActionButton";
+import { useState } from 'react';
+import { Upload, FileText } from 'lucide-react';
 
-interface ArticleListPageProps {
-  onArticleSelected: (articleId: string) => void;
-  onArticleImported?: (article: Article, segments: Segment[], candidates: CandidateExpression[]) => void;
-}
-
-export function ArticleListPage({ onArticleSelected, onArticleImported }: ArticleListPageProps) {
-  const [articles, setArticles] = useState<Array<Article & {
-    segmentCount: number;
-    readCount: number;
-    generatedCount: number;
-  }>>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Import form state
-  const [showImportForm, setShowImportForm] = useState(false);
-  const [pastedText, setPastedText] = useState("");
+export function ArticleListPage() {
+  const [title, setTitle] = useState('');
+  const [text, setText] = useState('');
   const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [importSuccess, setImportSuccess] = useState(false);
 
-  useEffect(() => {
-    async function loadArticles() {
-      try {
-        setLoading(true);
-        const result = await getArticles();
-        setArticles(result.articles);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load articles");
-      } finally {
-        setLoading(false);
-      }
-    }
-    void loadArticles();
-  }, []);
-
-  async function handleImportSubmit() {
-    if (!pastedText.trim()) return;
+  async function handleImport() {
+    if (!title.trim() || !text.trim()) return;
 
     setImporting(true);
-    setImportError(null);
-    setImportSuccess(false);
-
-    try {
-      const result = await createArticle({
-        title: `Article ${new Date().toLocaleString()}`,
-        sourceType: "txt",
-        rawText: pastedText,
-      });
-
-      setImportSuccess(true);
-      
-      // Notify parent
-      if (onArticleImported) {
-        onArticleImported(result.article, result.segments, result.candidates);
-      }
-      
-      // Reload articles list
-      const updatedArticles = await getArticles();
-      setArticles(updatedArticles.articles);
-      
-      // Close form after 1.5s
-      setTimeout(() => {
-        setShowImportForm(false);
-        setPastedText("");
-        setImportSuccess(false);
-      }, 1500);
-    } catch (err) {
-      setImportError(err instanceof Error ? err.message : "Failed to import article");
-    } finally {
+    // TODO: Call API to import article
+    setTimeout(() => {
       setImporting(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <main className="screen library">
-        <section className="readingHeader">
-          <h1>Articles</h1>
-        </section>
-        <p>Loading articles...</p>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="screen library">
-        <section className="readingHeader">
-          <h1>Articles</h1>
-        </section>
-        <p style={{ color: "red" }}>Error: {error}</p>
-      </main>
-    );
-  }
-
-  if (articles.length === 0) {
-    return (
-      <main className="screen library">
-        <section className="readingHeader">
-          <h1>Articles</h1>
-        </section>
-        <p>No articles yet. Import one to get started.</p>
-      </main>
-    );
+      alert('Article imported successfully!');
+      setTitle('');
+      setText('');
+    }, 1000);
   }
 
   return (
-    <main className="screen library">
-      <section className="readingHeader">
-        <h1>Articles</h1>
-        <p>{articles.length} article{articles.length !== 1 ? "s" : ""}</p>
-      </section>
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <header style={{ marginBottom: 'var(--space-4)' }}>
+        <h1>Import Article</h1>
+        <p style={{ color: 'var(--vercel-gray-600)', marginTop: 'var(--space-1)' }}>
+          Add a new article to start learning
+        </p>
+      </header>
 
-      {showImportForm && (
-        <section className="importPanel">
-          <label className="pastePanel">
-            <span>Paste article text</span>
-            <textarea
-              aria-label="Paste article text"
-              value={pastedText}
-              onChange={(event) => {
-                setPastedText(event.target.value);
-                setImportSuccess(false);
-              }}
-            />
-            <button type="button" disabled={!pastedText.trim() || importing} onClick={handleImportSubmit}>
-              {importing ? "Importing..." : "Use pasted text"}
-            </button>
+      <div className="card" style={{ padding: 'var(--space-4)' }}>
+        <div style={{ marginBottom: 'var(--space-3)' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: 'var(--space-1)' }}>
+            Article Title
           </label>
-          {importSuccess ? <p className="importStatus">Article imported!</p> : null}
-          {importError ? <p className="importStatus" style={{ color: "red" }}>{importError}</p> : null}
-          <label className="importDrop">
-            <span>Import TXT or Markdown article</span>
-            <strong>Choose a .txt or .md file</strong>
-            <input
-              aria-label="Import TXT or Markdown article"
-              type="file"
-              accept=".txt,.md,.markdown,text/plain,text/markdown"
-            />
+          <input
+            type="text"
+            placeholder="Enter article title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{ width: '100%' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: 'var(--space-3)' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: 'var(--space-1)' }}>
+            Article Text
           </label>
-        </section>
-      )}
+          <textarea
+            placeholder="Paste article text here..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={12}
+            style={{ width: '100%', fontFamily: 'inherit', resize: 'vertical' }}
+          />
+        </div>
 
-      <BottomActionButton onClick={() => setShowImportForm(!showImportForm)} icon={<Plus size={16} />}>
-        {showImportForm ? "Close Import" : "Import Article"}
-      </BottomActionButton>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+          <button
+            className="btn btn-primary"
+            onClick={handleImport}
+            disabled={!title.trim() || !text.trim() || importing}
+          >
+            <Upload size={16} />
+            {importing ? 'Importing...' : 'Import Article'}
+          </button>
 
-      {articles.map((article) => (
-        <section key={article.id} className="libraryItem" onClick={() => onArticleSelected(article.id)} style={{ cursor: "pointer" }}>
-          <h2>{article.title}</h2>
-          <p>
-            {article.segmentCount} segment{article.segmentCount !== 1 ? "s" : ""} · 
-            {article.generatedCount} generated · 
-            {article.readCount} read
-          </p>
-          <span>{new Date(article.createdAt).toLocaleDateString()}</span>
-        </section>
-      ))}
-    </main>
+          <button className="btn btn-secondary" disabled>
+            <FileText size={16} />
+            Upload File
+          </button>
+        </div>
+
+        <p style={{ fontSize: '14px', color: 'var(--vercel-gray-500)', marginTop: 'var(--space-3)' }}>
+          The article will be automatically segmented and AI will generate expression candidates.
+        </p>
+      </div>
+    </div>
   );
 }

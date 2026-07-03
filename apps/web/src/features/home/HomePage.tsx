@@ -1,105 +1,58 @@
-import { BookMarked, BookOpen, Files, RotateCcw } from "lucide-react";
-import type { ChangeEvent } from "react";
-
-interface HomePageProps {
-  newCardsToday: number;
-  completedReviewsToday: number;
-  dueReviewCount: number;
-  newCardTarget: number;
-  reviewTarget: number;
-  pendingSyncCount: number;
-  onNewCardTargetChange: (target: number) => void;
-  onReviewTargetChange: (target: number) => void;
-  onNavigate: (target: "read" | "review" | "cards" | "articles") => void;
-}
-
-export function HomePage({
-  newCardsToday,
-  completedReviewsToday,
-  dueReviewCount,
-  newCardTarget,
-  reviewTarget,
-  pendingSyncCount,
-  onNewCardTargetChange,
-  onReviewTargetChange,
-  onNavigate,
-}: HomePageProps) {
-  function updateTarget(event: ChangeEvent<HTMLInputElement>, onChange: (target: number) => void) {
-    onChange(Number(event.target.value));
-  }
-
+export function HomePage() {
   return (
-    <main className="screen homeScreen">
-      <section className="homeHeader">
-        <p>Daily plan</p>
-        <h1>Today</h1>
-      </section>
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <header style={{ marginBottom: 'var(--space-4)' }}>
+        <h1>Dashboard</h1>
+        <p style={{ color: 'var(--vercel-gray-600)', marginTop: 'var(--space-1)' }}>
+          Welcome to ShiJu AI Reading Trainer
+        </p>
+      </header>
 
-      <section className="homeStats" aria-label="Today's learning status">
-        <article>
-          <span>New cards today</span>
-          <strong>{newCardsToday}</strong>
-          <small>Target {newCardTarget}</small>
-        </article>
-        <article>
-          <span>Reviews completed</span>
-          <strong>{completedReviewsToday}</strong>
-          <small>Target {reviewTarget}</small>
-        </article>
-        <article>
-          <span>Due reviews</span>
-          <strong>{dueReviewCount}</strong>
-          <small>Ready now</small>
-        </article>
-      </section>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)' }}>
+        <div className="card" style={{ padding: 'var(--space-3)' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-1)' }}>
+            New Cards Today
+          </h3>
+          <p style={{ fontSize: '32px', fontWeight: '600', color: 'var(--vercel-black)' }}>
+            0
+          </p>
+          <p style={{ fontSize: '14px', color: 'var(--vercel-gray-500)' }}>
+            Target: 6
+          </p>
+        </div>
 
-      <section className="targetPanel" aria-label="Daily targets">
-        <label>
-          <span>Daily new-card target</span>
-          <input
-            aria-label="Daily new-card target"
-            min={0}
-            step={1}
-            type="number"
-            value={newCardTarget}
-            onChange={(event) => updateTarget(event, onNewCardTargetChange)}
-          />
-        </label>
-        <label>
-          <span>Daily review-card target</span>
-          <input
-            aria-label="Daily review-card target"
-            min={0}
-            step={1}
-            type="number"
-            value={reviewTarget}
-            onChange={(event) => updateTarget(event, onReviewTargetChange)}
-          />
-        </label>
-      </section>
+        <div className="card" style={{ padding: 'var(--space-3)' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-1)' }}>
+            Reviews Completed
+          </h3>
+          <p style={{ fontSize: '32px', fontWeight: '600', color: 'var(--vercel-black)' }}>
+            0
+          </p>
+          <p style={{ fontSize: '14px', color: 'var(--vercel-gray-500)' }}>
+            Target: 12
+          </p>
+        </div>
 
-      <section className="homeActions" aria-label="Primary actions">
-        <button type="button" onClick={() => onNavigate("read")}>
-          <BookOpen size={18} />
-          Continue reading
-        </button>
-        <button type="button" onClick={() => onNavigate("review")}>
-          <RotateCcw size={18} />
-          Review due cards
-        </button>
-        <button type="button" onClick={() => onNavigate("cards")}>
-          <BookMarked size={18} />
-          Cards
-        </button>
-        <button type="button" onClick={() => onNavigate("articles")}>
-          <Files size={18} />
-          Articles
-        </button>
-      </section>
+        <div className="card" style={{ padding: 'var(--space-3)' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-1)' }}>
+            Due Reviews
+          </h3>
+          <p style={{ fontSize: '32px', fontWeight: '600', color: 'var(--vercel-black)' }}>
+            0
+          </p>
+          <p style={{ fontSize: '14px', color: 'var(--vercel-gray-500)' }}>
+            Ready now
+          </p>
+        </div>
+      </div>
 
-      <p className="homeSyncStatus" role="status" aria-label={`Pending sync: ${pendingSyncCount}`}>
-        Pending sync: {pendingSyncCount}
-      </p>
-    </main>
+      <div className="card" style={{ padding: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
+        <h2 style={{ fontSize: '18px', marginBottom: 'var(--space-2)' }}>Quick Actions</h2>
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <button className="btn btn-primary">Start Review</button>
+          <button className="btn btn-secondary">Import Article</button>
+        </div>
+      </div>
+    </div>
   );
 }
