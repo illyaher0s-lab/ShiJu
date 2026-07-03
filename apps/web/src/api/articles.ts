@@ -1,86 +1,66 @@
-import type { Article, Segment, CandidateExpression } from "@art/domain";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
-export interface CreateArticleRequest {
+export interface Article {
+  id: string;
+  userId: string;
   title: string;
-  sourceType: "txt" | "markdown";
+  sourceType: 'txt' | 'markdown';
   rawText: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface CreateArticleResponse {
-  article: Article;
-  segments: Segment[];
-  candidates: CandidateExpression[];
+export interface Segment {
+  id: string;
+  articleId: string;
+  sequence: number;
+  text: string;
+  wordCount: number;
+  generationStatus: string;
+  progressStatus: string;
 }
 
-export interface GetArticlesResponse {
-  articles: Array<Article & {
-    segmentCount: number;
-    readCount: number;
-    generatedCount: number;
-  }>;
+export interface CandidateExpression {
+  id: string;
+  expression: string;
+  normalizedForm: string;
+  type: string;
+  meaningZh: string;
+  difficulty: string;
+  candidateStatus: string;
 }
 
-export interface GetArticleSegmentsResponse {
-  segments: Segment[];
-  candidates: CandidateExpression[];
-}
-
-/**
- * Convert snake_case API response to camelCase frontend format
- */
-function toCamelCase(obj: any): any {
-  if (Array.isArray(obj)) {
-    return obj.map(toCamelCase);
-  }
-  if (obj !== null && typeof obj === "object") {
-    const result: any = {};
-    for (const key in obj) {
-      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-      result[camelKey] = toCamelCase(obj[key]);
-    }
-    return result;
-  }
-  return obj;
-}
-
-export async function createArticle(request: CreateArticleRequest): Promise<CreateArticleResponse> {
-  const response = await fetch("/shiju/api/articles", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
+export async function importArticle(data: {
+  title: string;
+  rawText: string;
+  sourceType: 'txt' | 'markdown';
+}): Promise<{ article: Article; segments: Segment[]; candidates: CandidateExpression[] }> {
+  const response = await fetch(`${API_BASE}/articles`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
   });
-
+  
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(error.message || `HTTP ${response.status}`);
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to import article');
   }
-
-  const data = await response.json();
-  return toCamelCase(data);
+  
+  return response.json();
 }
 
-export async function getArticles(): Promise<GetArticlesResponse> {
-  const response = await fetch("/shiju/api/articles");
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
-
+export async function listArticles(): Promise<Article[]> {
+  const response = await fetch(`${API_BASE}/articles`);
+  if (!response.ok) throw new Error('Failed to list articles');
   const data = await response.json();
-  return toCamelCase(data);
+  return data.articles;
 }
 
-export async function getArticleSegments(articleId: string): Promise<GetArticleSegmentsResponse> {
-  const response = await fetch(`/shiju/api/articles/${articleId}/segments`);
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
-
-  const data = await response.json();
-  return toCamelCase(data);
+export async function getArticleSegments(articleId: string): Promise<{
+  segments: Segment[];
+  candidates: CandidateExpression[];
+}> {
+  const response = await fetch(`${API_BASE}/articles/${articleId}/segments`);
+  if (!response.ok) throw new Error('Failed to get article segments');
+  return response.json();
 }
