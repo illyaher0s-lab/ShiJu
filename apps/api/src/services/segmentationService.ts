@@ -20,12 +20,15 @@ export function segmentText(text: string): Segment[] {
   
   // If only one paragraph or no paragraph breaks, check if it needs splitting
   if (paragraphs.length === 1) {
-    const totalWords = countWords(paragraphs[0]);
+    const para = paragraphs[0];
+    if (!para) return [];
+    
+    const totalWords = countWords(para);
     if (totalWords <= MAX_WORDS) {
-      return [createSegment(paragraphs[0], 0)];
+      return [createSegment(para, 0)];
     }
     // Split single long paragraph at sentence boundaries
-    return splitLongParagraph(paragraphs[0]);
+    return splitLongParagraph(para);
   }
   
   const segments: Segment[] = [];
@@ -85,9 +88,9 @@ function splitLongParagraph(paragraph: string): Segment[] {
   const segments: Segment[] = [];
   
   // Try to split at sentence boundaries first
-  const sentences = paragraph.match(/[^.!?]+[.!?]+/g);
+  const sentences = paragraph.match(/[^.!?]+[.!?]+/g) || [];
   
-  if (sentences && sentences.length > 1) {
+  if (sentences.length > 1) {
     // Has sentences with punctuation
     let sentenceBuffer: string[] = [];
     let sentenceWordCount = 0;

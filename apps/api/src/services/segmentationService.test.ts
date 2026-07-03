@@ -29,7 +29,7 @@ describe('segmentText', () => {
     const segments = segmentText(text.trim());
     
     expect(segments.length).toBe(1);
-    expect(segments[0].text).toBe(text.trim());
+    expect(segments[0]?.text).toBe(text.trim());
   });
   
   it('should assign correct sequence numbers', () => {
@@ -37,7 +37,7 @@ describe('segmentText', () => {
     const segments = segmentText(text.trim());
     
     for (let i = 0; i < segments.length; i++) {
-      expect(segments[i].sequence).toBe(i);
+      expect(segments[i]?.sequence).toBe(i);
     }
   });
   
@@ -45,6 +45,6 @@ describe('segmentText', () => {
     const text = 'one two three four five';
     const segments = segmentText(text);
     
-    expect(segments[0].wordCount).toBe(5);
+    expect(segments[0]?.wordCount).toBe(5);
   });
 });

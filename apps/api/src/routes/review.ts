@@ -159,19 +159,46 @@ export async function registerReviewRoutes(app: FastifyInstance) {
   app.get('/review/stats', async (request, reply) => {
     const userId = 'user-1'; // TODO: from auth
     
-    const stats = await query(
+    const statsResult = await query<{
+      due_count: string;
+      new_count: string;
+      learning_count: string;
+      reviewing_count: string;
+      mastered_count: string;
+      total_count: string;
+    }>(
       `SELECT 
-        COUNT(*) FILTER (WHERE srs_due_at <= NOW() AND mastery_status IN ('new', 'learning', 'reviewing')) as due_count,
-        COUNT(*) FILTER (WHERE mastery_status = 'new') as new_count,
-        COUNT(*) FILTER (WHERE mastery_status = 'learning') as learning_count,
-        COUNT(*) FILTER (WHERE mastery_status = 'reviewing') as reviewing_count,
-        COUNT(*) FILTER (WHERE mastery_status = 'mastered') as mastered_count,
+        COUNT(CASE WHEN srs_due_at <= NOW() THEN 1 END) as due_count,
+        COUNT(CASE WHEN mastery_status = 'new' THEN 1 END) as new_count,
+        COUNT(CASE WHEN mastery_status = 'learning' THEN 1 END) as learning_count,
+        COUNT(CASE WHEN mastery_status = 'reviewing' THEN 1 END) as reviewing_count,
+        COUNT(CASE WHEN mastery_status = 'mastered' THEN 1 END) as mastered_count,
         COUNT(*) as total_count
-      FROM expression_senses
+      FROM expression_senses 
       WHERE user_id = $1 AND deleted_at IS NULL`,
       [userId]
     );
     
-    return reply.send(stats.rows[0]);
+    const stats = statsResult.rows[0];
+    
+    if (!stats) {
+      return reply.send({
+        dueCount: '0',
+        newCount: '0',
+        learningCount: '0',
+        reviewingCount: '0',
+        masteredCount: '0',
+        totalCount: '0',
+      });
+    }
+    
+    return reply.send({
+      dueCount: stats!.due_count,
+      newCount: stats!.new_count,
+      learningCount: stats!.learning_count,
+      reviewingCount: stats!.reviewing_count,
+      masteredCount: stats!.mastered_count,
+      totalCount: stats!.total_count,
+    });
   });
 }

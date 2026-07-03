@@ -153,6 +153,10 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
       }
 
       const toolCall = result.toolCalls[0];
+      if (!toolCall) {
+        throw new Error('toolCall is undefined');
+      }
+      
       console.log(`[LLM] Tool called: ${toolCall.function.name}`);
 
       // Parse tool arguments
@@ -192,7 +196,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
       }
       
       // Helper: normalize type to valid ExpressionType
-      function normalizeType(type: string): string {
+      function normalizeType(type: string): 'phrasal_verb' | 'collocation' | 'idiom' | 'sentence_pattern' | 'other' {
         const normalized = (type || '').toLowerCase().trim();
         if (['phrasal_verb', 'phrasal verb', 'phrasal-verb'].includes(normalized)) return 'phrasal_verb';
         if (['collocation'].includes(normalized)) return 'collocation';
@@ -202,9 +206,9 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
       }
       
       // Helper: normalize difficulty to CEFR level
-      function normalizeDifficulty(difficulty: any): string {
+      function normalizeDifficulty(difficulty: any): 'A2' | 'B1' | 'B2' | 'C1' | 'C2' {
         if (typeof difficulty === 'string' && ['A2', 'B1', 'B2', 'C1', 'C2'].includes(difficulty)) {
-          return difficulty;
+          return difficulty as 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
         }
         const num = Number(difficulty);
         if (num <= 3) return 'A2';
@@ -238,6 +242,16 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
 
       console.log(`[LLM] Processed ${candidates.length} candidates via tool calling`);
       return { candidates };
+    },
+    
+    async generateManualSelectionDraft(request) {
+      // TODO: Implement manual selection draft generation with LLM
+      throw new Error('Manual selection draft generation not yet implemented for OpenAI-compatible provider');
+    },
+    
+    async generateContextEntryDraft(request) {
+      // TODO: Implement context entry draft generation with LLM
+      throw new Error('Context entry draft generation not yet implemented for OpenAI-compatible provider');
     },
   };
 }

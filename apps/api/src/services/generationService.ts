@@ -1,12 +1,12 @@
 import type { CandidateExpression, Segment } from "@art/domain";
 import { createMockProvider } from "../ai/mockProvider";
 import { createOpenAiCompatibleProvider } from "../ai/openAiCompatibleProvider";
-import type { AiProvider } from "../ai/provider";
+import type { AiProvider, CandidateData } from "../ai/provider";
 import { loadConfig, type ApiConfig } from "../config";
 
 export interface SegmentGenerationResult {
   segments: Segment[];
-  candidates: CandidateExpression[];
+  candidates: CandidateData[];
 }
 
 export function createGenerationProvider(config: ApiConfig = loadConfig()): AiProvider {

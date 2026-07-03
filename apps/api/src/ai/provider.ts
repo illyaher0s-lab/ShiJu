@@ -1,7 +1,10 @@
 import type { CandidateExpression, ContextEntryGenerationDraft, ContextEntryGenerationRequest, ManualSelectionGenerationDraft, ManualSelectionGenerationRequest, Segment } from "@art/domain";
 
+// AI provider returns candidate data without database fields (id, userId, articleId, segmentId)
+export type CandidateData = Omit<CandidateExpression, 'id' | 'userId' | 'articleId' | 'segmentId'>;
+
 export interface AiGenerationResult {
-  candidates: CandidateExpression[];
+  candidates: CandidateData[];
 }
 
 export interface AiProvider {

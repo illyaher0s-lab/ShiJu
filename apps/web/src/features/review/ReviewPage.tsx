@@ -30,23 +30,25 @@ export function ReviewPage() {
   }
 
   async function handleFeedback(feedback: 'again' | 'hard' | 'good' | 'easy') {
-    if (submitting || !expressions[currentIndex]) return;
-
+    const current = expressions[currentIndex];
+    if (!current) return;
+    
     setSubmitting(true);
-    setError(null);
-
+    
     try {
-      await submitReviewFeedback(expressions[currentIndex].id, feedback);
+      const result = await submitReviewFeedback(current.id, feedback);
+      console.log('Review feedback submitted:', result);
       
       // Move to next card
       if (currentIndex < expressions.length - 1) {
         setCurrentIndex(currentIndex + 1);
-        setShowAnswer(false);
       } else {
-        // Finished all reviews
+        // Completed all reviews
         await loadDueReviews();
+        setCurrentIndex(0);
       }
     } catch (err) {
+      console.error('Failed to submit feedback:', err);
       setError(err instanceof Error ? err.message : 'Failed to submit feedback');
     } finally {
       setSubmitting(false);
@@ -91,6 +93,19 @@ export function ReviewPage() {
   }
 
   const current = expressions[currentIndex];
+  
+  if (!current) {
+    return (
+      <>
+        <header style={{ marginBottom: 'var(--space-4)' }}>
+          <h1>Review</h1>
+        </header>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '700px' }}>
+          <p style={{ color: 'var(--vercel-gray-600)' }}>No card available</p>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -131,7 +146,7 @@ export function ReviewPage() {
               color: 'var(--vercel-gray-900)',
             }}
           >
-            {current.expression}
+            {current!.expression}
           </div>
           <div
             style={{
@@ -141,7 +156,7 @@ export function ReviewPage() {
               letterSpacing: '0.5px',
             }}
           >
-            {current.type} • {current.difficulty}
+            {current!.type} • {current!.difficulty}
           </div>
         </div>
 
@@ -171,10 +186,10 @@ export function ReviewPage() {
               }}
             >
               <div style={{ fontSize: '24px', fontWeight: '500', marginBottom: 'var(--space-1)' }}>
-                {current.meaningZh}
+                {current!.meaningZh}
               </div>
               <div style={{ fontSize: '14px', color: 'var(--vercel-gray-600)' }}>
-                Reviewed {current.reviewCount} times • {current.occurrenceCount} occurrences
+                Reviewed {current!.reviewCount} times • {current!.occurrenceCount} occurrences
               </div>
             </div>
 

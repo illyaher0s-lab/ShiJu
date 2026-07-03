@@ -21,12 +21,12 @@ export function HomePage() {
     try {
       const data = await getReviewStats();
       setStats({
-        dueCount: Number(data.due_count) || 0,
-        newCount: Number(data.new_count) || 0,
-        learningCount: Number(data.learning_count) || 0,
-        reviewingCount: Number(data.reviewing_count) || 0,
-        masteredCount: Number(data.mastered_count) || 0,
-        totalCount: Number(data.total_count) || 0,
+        dueCount: Number(data.dueCount) || 0,
+        newCount: Number(data.newCount) || 0,
+        learningCount: Number(data.learningCount) || 0,
+        reviewingCount: Number(data.reviewingCount) || 0,
+        masteredCount: Number(data.masteredCount) || 0,
+        totalCount: Number(data.totalCount) || 0,
       });
     } catch (err) {
       console.error('Failed to load stats:', err);

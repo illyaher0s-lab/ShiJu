@@ -145,7 +145,14 @@ export async function registerArticleRoutes(app: FastifyInstance) {
           now,
         ]
       );
-      candidates.push({ ...candidate, id: candidateId, difficulty: normalizedDifficulty as any });
+      candidates.push({ 
+        ...candidate, 
+        id: candidateId, 
+        userId, 
+        articleId, 
+        segmentId: segments[0]?.id || '',
+        difficulty: normalizedDifficulty as any 
+      });
 
       // Only create expression_senses and occurrences for 'selected' candidates
       if (candidate.candidateStatus === 'selected') {
