@@ -20,7 +20,7 @@ export function ArticleListPage() {
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <>
       <header style={{ marginBottom: 'var(--space-4)' }}>
         <h1>Import Article</h1>
         <p style={{ color: 'var(--vercel-gray-600)', marginTop: 'var(--space-1)' }}>
@@ -28,7 +28,7 @@ export function ArticleListPage() {
         </p>
       </header>
 
-      <div className="card" style={{ padding: 'var(--space-4)' }}>
+      <div className="card" style={{ padding: 'var(--space-4)', maxWidth: '800px' }}>
         <div style={{ marginBottom: 'var(--space-3)' }}>
           <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: 'var(--space-1)' }}>
             Article Title
@@ -75,6 +75,6 @@ export function ArticleListPage() {
           The article will be automatically segmented and AI will generate expression candidates.
         </p>
       </div>
-    </div>
+    </>
   );
 }
