@@ -369,3 +369,168 @@ a:hover {
   padding: var(--space-3);
   min-height: calc(100vh - 74px);
 }
+
+/* Selection Toolbar */
+.selectionToolbar {
+  background: var(--vercel-black);
+  color: var(--vercel-white);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+}
+
+.selectionToolbar span {
+  font-weight: 500;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectionToolbar button {
+  background: var(--vercel-white);
+  color: var(--vercel-black);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.2s;
+}
+
+.selectionToolbar button:hover {
+  opacity: 0.8;
+}
+
+/* Sheet (bottom drawer) */
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--vercel-white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0px -4px 20px rgba(0, 0, 0, 0.1);
+  padding: var(--space-4);
+  max-height: 70vh;
+  overflow-y: auto;
+  z-index: 200;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sheetHandle {
+  width: 40px;
+  height: 4px;
+  background: var(--vercel-gray-300);
+  border-radius: 2px;
+  margin: 0 auto var(--space-3);
+}
+
+.sheetTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+.sheetTop h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.typeLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--vercel-gray-500);
+  font-weight: 500;
+  margin-bottom: var(--space-1);
+}
+
+.localMeaning {
+  font-size: 16px;
+  color: var(--vercel-gray-700);
+  margin-bottom: var(--space-2);
+  font-style: italic;
+}
+
+.meaningZh {
+  font-size: 18px;
+  color: var(--vercel-black);
+  font-weight: 500;
+  margin-bottom: var(--space-3);
+}
+
+.sheetActions {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.sheetActions button {
+  flex: 1;
+  padding: var(--space-2);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.iconButton {
+  background: transparent;
+  border: none;
+  color: var(--vercel-gray-600);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.iconButton:hover {
+  color: var(--vercel-black);
+}
+
+.expandButton {
+  width: 100%;
+  padding: var(--space-2);
+  background: var(--vercel-gray-100);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--vercel-gray-700);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.expandButton:hover {
+  background: var(--vercel-gray-200);
+}
+
+.draftActions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.draftActions button {
+  flex: 1;
+  padding: var(--space-2);
+}

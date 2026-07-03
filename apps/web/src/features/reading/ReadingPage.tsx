@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { getArticleSegments, type Segment } from '../../api/articles';
+import type { CandidateExpression } from '@art/domain';
+import { SelectionToolbar } from './SelectionToolbar';
+import { GeneratedCardDraftSheet } from './GeneratedCardDraftSheet';
+import { buildManualSelectionDraft } from './manualSelection';
 
 export function ReadingPage() {
   const { articleId } = useParams<{ articleId: string }>();
@@ -11,12 +15,35 @@ export function ReadingPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Manual selection state
+  const [selectedText, setSelectedText] = useState('');
+  const [showToolbar, setShowToolbar] = useState(false);
+  const [generatedDraft, setGeneratedDraft] = useState<CandidateExpression | null>(null);
 
   useEffect(() => {
     if (articleId) {
       loadSegments();
     }
   }, [articleId]);
+
+  useEffect(() => {
+    // Listen for text selection
+    function handleSelectionChange() {
+      const selection = window.getSelection();
+      const text = selection?.toString().trim() || '';
+      
+      if (text && text.length > 0) {
+        setSelectedText(text);
+        setShowToolbar(true);
+      } else {
+        setShowToolbar(false);
+      }
+    }
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+  }, []);
 
   async function loadSegments() {
     if (!articleId) return;
@@ -39,13 +66,52 @@ export function ReadingPage() {
   function goToPrevious() {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+      clearSelection();
     }
   }
 
   function goToNext() {
     if (currentIndex < segments.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      clearSelection();
     }
+  }
+
+  function clearSelection() {
+    window.getSelection()?.removeAllRanges();
+    setShowToolbar(false);
+    setSelectedText('');
+  }
+
+  function handleGenerateCard(text: string) {
+    if (!articleId) return;
+    
+    const currentSegment = segments[currentIndex];
+    if (!currentSegment) return;
+    
+    const draft = buildManualSelectionDraft({
+      selectedText: text,
+      sentence: currentSegment.text,
+      articleId,
+      segmentId: currentSegment.id,
+      generatedAt: new Date().toISOString(),
+    });
+    
+    setGeneratedDraft(draft);
+    setShowToolbar(false);
+  }
+
+  function handleAcceptDraft(draft: CandidateExpression) {
+    console.log('Accepted draft:', draft);
+    // TODO: Save to backend via POST /manual-selection/accept or similar
+    alert(`Card "${draft.expression}" added to review!`);
+    setGeneratedDraft(null);
+    clearSelection();
+  }
+
+  function handleDismissDraft() {
+    setGeneratedDraft(null);
+    clearSelection();
   }
 
   if (loading) {
@@ -100,6 +166,19 @@ export function ReadingPage() {
   }
 
   const currentSegment = segments[currentIndex];
+  if (!currentSegment) {
+    return (
+      <>
+        <header style={{ marginBottom: 'var(--space-4)' }}>
+          <h1>Reading</h1>
+        </header>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '800px' }}>
+          <p style={{ color: 'var(--vercel-gray-600)' }}>Invalid segment index</p>
+        </div>
+      </>
+    );
+  }
+
   const progress = Math.round(((currentIndex + 1) / segments.length) * 100);
 
   return (
@@ -139,13 +218,14 @@ export function ReadingPage() {
       </div>
 
       {/* Segment content */}
-      <div className="card" style={{ padding: 'var(--space-5)', marginBottom: 'var(--space-3)', maxWidth: '800px' }}>
+      <div className="card" style={{ padding: 'var(--space-5)', marginBottom: 'var(--space-3)', maxWidth: '800px', position: 'relative' }}>
         <div
           style={{
             fontSize: '18px',
             lineHeight: '1.8',
             color: 'var(--vercel-gray-900)',
             whiteSpace: 'pre-wrap',
+            userSelect: 'text',
           }}
         >
           {currentSegment.text}
@@ -179,6 +259,16 @@ export function ReadingPage() {
           </span>
         </div>
       </div>
+
+      {/* Selection Toolbar */}
+      {showToolbar && selectedText && (
+        <div style={{ position: 'fixed', bottom: '120px', left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}>
+          <SelectionToolbar
+            selectedText={selectedText}
+            onGenerate={handleGenerateCard}
+          />
+        </div>
+      )}
 
       {/* Navigation */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', maxWidth: '800px' }}>
@@ -222,6 +312,15 @@ export function ReadingPage() {
             Back to Articles
           </button>
         </div>
+      )}
+
+      {/* Generated Draft Sheet */}
+      {generatedDraft && (
+        <GeneratedCardDraftSheet
+          draft={generatedDraft}
+          onAccept={handleAcceptDraft}
+          onDismiss={handleDismissDraft}
+        />
       )}
     </>
   );
