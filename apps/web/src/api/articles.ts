@@ -30,6 +30,29 @@ export interface CandidateExpression {
   candidateStatus: string;
 }
 
+export interface ExpressionSense {
+  id: string;
+  expression: string;
+  normalizedForm: string;
+  type: string;
+  meaningZh: string;
+  difficulty: string;
+  masteryStatus: string;
+  srsDueAt: string;
+  reviewCount: number;
+  occurrenceCount: number;
+}
+
+export interface ReviewStats {
+  dueCount: number;
+  newCount: number;
+  learningCount: number;
+  reviewingCount: number;
+  masteredCount: number;
+  totalCount: number;
+}
+
+// Articles
 export async function importArticle(data: {
   title: string;
   rawText: string;
@@ -62,5 +85,44 @@ export async function getArticleSegments(articleId: string): Promise<{
 }> {
   const response = await fetch(`${API_BASE}/articles/${articleId}/segments`);
   if (!response.ok) throw new Error('Failed to get article segments');
+  return response.json();
+}
+
+// Review
+export async function getDueReviews(): Promise<{
+  expressions: ExpressionSense[];
+  total: number;
+}> {
+  const response = await fetch(`${API_BASE}/review/due`);
+  if (!response.ok) throw new Error('Failed to get due reviews');
+  return response.json();
+}
+
+export async function submitReviewFeedback(
+  expressionSenseId: string,
+  feedback: 'again' | 'hard' | 'good' | 'easy'
+): Promise<{
+  success: boolean;
+  nextDueAt: string;
+  intervalDays: number;
+  masteryStatus: string;
+}> {
+  const response = await fetch(`${API_BASE}/review/feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expressionSenseId, feedback }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to submit feedback');
+  }
+  
+  return response.json();
+}
+
+export async function getReviewStats(): Promise<ReviewStats> {
+  const response = await fetch(`${API_BASE}/review/stats`);
+  if (!response.ok) throw new Error('Failed to get review stats');
   return response.json();
 }
