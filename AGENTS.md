@@ -276,12 +276,13 @@ If you can't be sure something worked, say so explicitly. Default to surfacing u
 - **PWA 必需**：支持离线使用、安装到主屏幕
 - **IndexedDB 必需**：不能依赖 localStorage（容量限制）
 - **Fixture 模式**：当前阶段使用 `fixtures/sampleSegment.ts`，不连接真实后端
-
 ### 后端约束
+
 - **Mock Provider 优先**：本地开发使用 `AI_PROVIDER=mock`
 - **PostgreSQL 必需**：不能改用 SQLite 或 MongoDB
 - **幂等性必需**：所有写操作通过 `client_operation_id` 去重
 - **轻量级队列**：当前阶段内存队列够用，不要引入 Redis/BullMQ
+- **camelCase 契约强制**：所有对外 API 接口必须返回 camelCase，数据库行一律经 `apps/api/src/lib/dbRowTransformer.ts` 出口转换。禁止在路由层手动逐字段映射（散点补丁），禁止返回 snake_case。前后端共享类型通过 `@art/domain` monorepo 包，确保编译期契约一致性。参考：Google JSON Style Guide
 
 ### 数据模型约束
 - **软删除**：使用 `deleted_at` 字段，不物理删除
