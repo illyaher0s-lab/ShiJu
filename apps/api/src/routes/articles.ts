@@ -273,9 +273,9 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at,
-      segmentCount: row.segment_count,
-      readCount: row.read_count,
-      generatedCount: row.generated_count,
+      segmentCount: Number(row.segment_count),
+      readCount: Number(row.read_count),
+      generatedCount: Number(row.generated_count),
     }));
     return reply.send({ articles });
   });
