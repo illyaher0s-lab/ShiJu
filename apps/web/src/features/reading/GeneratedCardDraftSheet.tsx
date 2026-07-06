@@ -33,18 +33,18 @@ export function GeneratedCardDraftSheet({ draft, onAccept, onDismiss }: Generate
 
       <dl className="answerDetails draftDetails" style={{ marginBottom: 'var(--space-4)' }}>
         <div style={{ marginBottom: 'var(--space-3)' }}>
-          <dt style={{ fontSize: '13px', fontWeight: '600', color: 'var(--vercel-gray-700)', marginBottom: 'var(--space-1)' }}>
+          <dt style={{ fontSize: '12px', fontWeight: '500', color: 'var(--vercel-gray-500)', marginBottom: 'var(--space-1)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Original sentence
           </dt>
-          <dd style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--vercel-gray-900)' }}>
+          <dd style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--vercel-gray-900)', fontWeight: '400' }}>
             {draft.sentence}
           </dd>
         </div>
         <div>
-          <dt style={{ fontSize: '13px', fontWeight: '600', color: 'var(--vercel-gray-700)', marginBottom: 'var(--space-1)' }}>
+          <dt style={{ fontSize: '12px', fontWeight: '500', color: 'var(--vercel-gray-500)', marginBottom: 'var(--space-1)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Sentence translation
           </dt>
-          <dd style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--vercel-gray-900)' }}>
+          <dd style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--vercel-gray-900)', fontWeight: '400' }}>
             {draft.sentenceTranslation}
           </dd>
         </div>
