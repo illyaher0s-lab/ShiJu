@@ -19,7 +19,7 @@ export function App() {
             <Route path="/import" element={<ArticleListPage />} />
             <Route path="/library" element={<CardLibraryPage />} />
             <Route path="/review" element={<ReviewPage />} />
-            <Route path="/reading" element={<ReadingPage />} />
+            <Route path="/reading/:articleId" element={<ReadingPage />} />
             <Route path="/articles/:id" element={<ArticleDetailPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
