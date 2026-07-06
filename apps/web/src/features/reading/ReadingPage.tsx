@@ -85,6 +85,17 @@ export function ReadingPage() {
     setSelectedText('');
   }
 
+  function extractSentenceContaining(text: string, selectedText: string): string {
+    // Split by sentence boundaries (. ! ?)
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    
+    // Find the sentence containing the selected text
+    const containingSentence = sentences.find(s => s.includes(selectedText));
+    
+    // If found, return it; otherwise return the first sentence as fallback
+    return containingSentence || sentences[0] || text;
+  }
+
   async function handleGenerateCard(text: string) {
     if (!articleId) return;
     
@@ -92,9 +103,11 @@ export function ReadingPage() {
     if (!currentSegment) return;
     
     try {
+      const sentence = extractSentenceContaining(currentSegment.text, text);
+      
       const draft = await buildManualSelectionDraft({
         selectedText: text,
-        sentence: currentSegment.text,
+        sentence: sentence,
         articleId,
         segmentId: currentSegment.id,
         generatedAt: new Date().toISOString(),
