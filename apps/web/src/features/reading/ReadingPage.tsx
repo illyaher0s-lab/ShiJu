@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
-import { getArticleSegments, type Segment } from '../../api/articles';
-import type { CandidateExpression } from '@art/domain';
+import { getArticleSegments } from '../../api/articles';
+import type { Segment, CandidateExpression } from '@art/domain';
 import { SelectionToolbar } from './SelectionToolbar';
 import { GeneratedCardDraftSheet } from './GeneratedCardDraftSheet';
 import { buildManualSelectionDraft } from './manualSelection';
