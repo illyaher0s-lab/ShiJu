@@ -8,6 +8,9 @@ import type {
   ExpressionSense 
 } from '@art/domain';
 
+// Re-export for components that import from this file
+export type { Article, Segment, CandidateExpression, ExpressionSense };
+
 // ReviewStats not in domain package - keep local definition
 // Note: backend returns 'reviewCount', but we keep 'reviewingCount' for backward compatibility
 export interface ReviewStats {
