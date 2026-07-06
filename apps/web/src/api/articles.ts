@@ -42,6 +42,9 @@ export async function importArticle(data: {
   return response.json();
 }
 
+// Alias for backward compatibility
+export const createArticle = importArticle;
+
 export async function listArticles(): Promise<Article[]> {
   const response = await fetch(`${API_BASE}/articles`);
   if (!response.ok) throw new Error('Failed to list articles');
