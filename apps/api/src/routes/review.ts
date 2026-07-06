@@ -23,7 +23,7 @@ export async function registerReviewRoutes(app: FastifyInstance) {
       WHERE es.user_id = $1 
         AND es.deleted_at IS NULL
         AND es.srs_due_at <= NOW()
-        AND es.mastery_status IN ('new', 'learning', 'reviewing')
+        AND es.mastery_status IN ('new', 'learning', 'review')
       GROUP BY es.id
       ORDER BY es.srs_due_at ASC
       LIMIT 20`,
@@ -63,8 +63,8 @@ export async function registerReviewRoutes(app: FastifyInstance) {
     
     // Simple SM-2 algorithm
     const rating = { again: 1, hard: 2, good: 3, easy: 4 }[feedback];
-    let easeFactor = sense.ease_factor || 2.5;
-    let intervalDays = sense.interval_days || 0;
+    let easeFactor = Number.isFinite(sense.ease_factor) ? sense.ease_factor : 2.5;
+    let intervalDays = Number.isFinite(sense.interval_days) ? sense.interval_days : 0;
     let masteryStatus = sense.mastery_status;
     
     if (rating === 1) {
@@ -89,7 +89,7 @@ export async function registerReviewRoutes(app: FastifyInstance) {
       if (intervalDays >= 21) {
         masteryStatus = 'mastered';
       } else if (intervalDays >= 7) {
-        masteryStatus = 'reviewing';
+        masteryStatus = 'review';
       } else {
         masteryStatus = 'learning';
       }
@@ -136,11 +136,11 @@ export async function registerReviewRoutes(app: FastifyInstance) {
         expressionSenseId,
         feedback,
         rating,
-        sense.srs_due_at,
+        sense.srs_due_at || now,
         nextDueAt,
-        sense.ease_factor,
+        sense.ease_factor || 2.5,
         easeFactor,
-        sense.interval_days,
+        sense.interval_days || 0,
         intervalDays,
         now,
         now,
@@ -163,7 +163,7 @@ export async function registerReviewRoutes(app: FastifyInstance) {
       due_count: string;
       new_count: string;
       learning_count: string;
-      reviewing_count: string;
+      review_count: string;
       mastered_count: string;
       total_count: string;
     }>(
@@ -171,7 +171,7 @@ export async function registerReviewRoutes(app: FastifyInstance) {
         COUNT(CASE WHEN srs_due_at <= NOW() THEN 1 END) as due_count,
         COUNT(CASE WHEN mastery_status = 'new' THEN 1 END) as new_count,
         COUNT(CASE WHEN mastery_status = 'learning' THEN 1 END) as learning_count,
-        COUNT(CASE WHEN mastery_status = 'reviewing' THEN 1 END) as reviewing_count,
+        COUNT(CASE WHEN mastery_status = 'review' THEN 1 END) as review_count,
         COUNT(CASE WHEN mastery_status = 'mastered' THEN 1 END) as mastered_count,
         COUNT(*) as total_count
       FROM expression_senses 
@@ -196,7 +196,7 @@ export async function registerReviewRoutes(app: FastifyInstance) {
       dueCount: stats!.due_count,
       newCount: stats!.new_count,
       learningCount: stats!.learning_count,
-      reviewingCount: stats!.reviewing_count,
+      reviewingCount: stats!.review_count,
       masteredCount: stats!.mastered_count,
       totalCount: stats!.total_count,
     });
