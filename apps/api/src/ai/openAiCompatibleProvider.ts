@@ -107,6 +107,70 @@ const CREATE_CANDIDATES_TOOL = {
   }
 };
 
+// Tool schema for manual selection draft
+const CREATE_MANUAL_SELECTION_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "create_manual_selection_draft",
+    description: "Generate a learning card for a user-selected expression",
+    parameters: {
+      type: "object",
+      properties: {
+        expression: {
+          type: "string",
+          description: "The selected expression (as-is from user selection)"
+        },
+        normalized_form: {
+          type: "string",
+          description: "Canonical form (e.g., 'pick up' for 'picked up', lowercase)"
+        },
+        type: {
+          type: "string",
+          enum: ["phrasal_verb", "collocation", "idiom", "sentence_pattern", "other"],
+          description: "Expression type"
+        },
+        meaning_zh: {
+          type: "string",
+          description: "Chinese translation of the general meaning"
+        },
+        local_meaning: {
+          type: "string",
+          description: "English definition specific to this context (NOT Chinese)"
+        },
+        sentence_translation: {
+          type: "string",
+          description: "Chinese translation of the example sentence"
+        },
+        syntax_hint: {
+          type: "string",
+          description: "Grammatical or usage notes, or null if not applicable"
+        },
+        difficulty: {
+          type: "string",
+          enum: ["A2", "B1", "B2", "C1", "C2"],
+          description: "CEFR difficulty level"
+        },
+        value_score: {
+          type: "number",
+          minimum: 1,
+          maximum: 10,
+          description: "Learning value score (1-10)"
+        }
+      },
+      required: [
+        "expression",
+        "normalized_form",
+        "type",
+        "meaning_zh",
+        "local_meaning",
+        "sentence_translation",
+        "difficulty",
+        "value_score"
+      ]
+    }
+  }
+};
+
 export function buildGenerationPrompt(segmentText: string): string {
   return [
     "Analyze this English reading segment for an adult Chinese-speaking English learner.",
@@ -122,6 +186,30 @@ export function buildGenerationPrompt(segmentText: string): string {
     "",
     "Segment:",
     segmentText,
+  ].join("\n");
+}
+
+export function buildManualSelectionPrompt(selectedText: string, sentence: string, context: string): string {
+  return [
+    "A Chinese-speaking English learner selected this expression from their reading:",
+    `Selected: "${selectedText}"`,
+    "",
+    "Create a learning card with:",
+    "- expression: the exact selected text",
+    "- normalized_form: canonical form (e.g., 'pick up' for 'picked up', lowercase)",
+    "- type: phrasal_verb, collocation, idiom, sentence_pattern, or other",
+    "- meaning_zh: Chinese translation of the general meaning",
+    "- local_meaning: English definition specific to THIS context (NOT Chinese)",
+    "- sentence_translation: Chinese translation of the sentence below",
+    "- syntax_hint: grammatical or usage notes (or null)",
+    "- difficulty: CEFR level (A2, B1, B2, C1, C2)",
+    "- value_score: 1-10 learning value",
+    "",
+    "Sentence containing the expression:",
+    sentence,
+    "",
+    "Context:",
+    context,
   ].join("\n");
 }
 
@@ -247,8 +335,90 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
     },
     
     async generateManualSelectionDraft(request) {
-      // TODO: Implement manual selection draft generation with LLM
-      throw new Error('Manual selection draft generation not yet implemented for OpenAI-compatible provider');
+      console.log(`[LLM] Manual selection: "${request.selectedText}"`);
+      
+      const result = await callLLM(llmConfig, {
+        messages: [{ 
+          role: "user", 
+          content: buildManualSelectionPrompt(request.selectedText, request.sentence, request.context) 
+        }],
+        tools: [CREATE_MANUAL_SELECTION_TOOL],
+        toolChoice: { type: "function", function: { name: CREATE_MANUAL_SELECTION_TOOL.function.name } }
+      });
+
+      if (!result.toolCalls || result.toolCalls.length === 0) {
+        console.error(`[LLM] No tool_calls in manual selection response`);
+        throw new Error(`Model did not call tool for manual selection`);
+      }
+
+      const toolCall = result.toolCalls[0];
+      if (!toolCall) {
+        throw new Error('toolCall is undefined');
+      }
+
+      let toolArgs: any;
+      try {
+        toolArgs = JSON.parse(toolCall.function.arguments);
+      } catch (parseError) {
+        console.error(`[LLM] Failed to parse manual selection tool arguments:`, parseError);
+        throw new Error(`Failed to parse tool arguments: ${parseError}`);
+      }
+
+      // Helper functions (reuse from generateSegment)
+      function normalizeType(type: string): 'phrasal_verb' | 'collocation' | 'idiom' | 'sentence_pattern' | 'other' {
+        const normalized = (type || '').toLowerCase().trim();
+        if (['phrasal_verb', 'phrasal verb', 'phrasal-verb'].includes(normalized)) return 'phrasal_verb';
+        if (['collocation'].includes(normalized)) return 'collocation';
+        if (['idiom'].includes(normalized)) return 'idiom';
+        if (['sentence_pattern', 'sentence pattern', 'sentence-pattern'].includes(normalized)) return 'sentence_pattern';
+        return 'other';
+      }
+
+      function normalizeDifficulty(difficulty: any): 'A2' | 'B1' | 'B2' | 'C1' | 'C2' {
+        if (typeof difficulty === 'string' && ['A2', 'B1', 'B2', 'C1', 'C2'].includes(difficulty)) {
+          return difficulty as 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+        }
+        const num = Number(difficulty);
+        if (num <= 3) return 'A2';
+        if (num <= 5) return 'B1';
+        if (num <= 7) return 'B2';
+        if (num <= 9) return 'C1';
+        return 'C2';
+      }
+
+      const candidate = {
+        id: `manual-${request.clientOperationId}`,
+        userId: request.userId,
+        articleId: request.articleId,
+        segmentId: request.segmentId,
+        expression: toolArgs.expression || request.selectedText,
+        normalizedForm: toolArgs.normalized_form || toolArgs.normalizedForm || request.selectedText.toLowerCase(),
+        type: normalizeType(toolArgs.type),
+        meaningZh: toolArgs.meaning_zh || toolArgs.meaningZh,
+        localMeaning: toolArgs.local_meaning || toolArgs.localMeaning,
+        sentence: request.sentence,
+        sentenceTranslation: toolArgs.sentence_translation || toolArgs.sentenceTranslation,
+        syntaxHint: toolArgs.syntax_hint || toolArgs.syntaxHint || null,
+        difficulty: normalizeDifficulty(toolArgs.difficulty),
+        valueScore: toolArgs.value_score || toolArgs.valueScore || 7,
+        candidateStatus: 'backup_candidate' as const,
+        statusReason: 'Generated from manual selection',
+        occurrenceCount: 1,
+        modelProvider: 'tool_calling',
+        modelName: llmConfig.model,
+        promptVersion: 'manual_selection_v1',
+        generationVersion: '1.0',
+        generatedAt: new Date().toISOString(),
+      };
+
+      console.log(`[LLM] Manual selection draft created for "${candidate.expression}"`);
+      
+      return {
+        candidate,
+        duplicateExpressionSenseId: null,
+        recommendation: 'add' as const,
+        recommendationReason: 'New expression from manual selection',
+      };
     },
     
     async generateContextEntryDraft(request) {

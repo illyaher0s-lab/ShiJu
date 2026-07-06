@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { ManualSelectionGenerationRequest } from "@art/domain";
-import { createMockProvider } from "../ai/mockProvider";
+import { createGenerationProvider } from "../services/generationService";
 import { generateManualSelectionDraft } from "../services/manualSelectionService";
 
 export async function registerManualSelectionRoutes(app: FastifyInstance) {
@@ -8,7 +8,7 @@ export async function registerManualSelectionRoutes(app: FastifyInstance) {
     const body = request.body as ManualSelectionGenerationRequest;
 
     try {
-      const provider = createMockProvider();
+      const provider = createGenerationProvider();
       const draft = await generateManualSelectionDraft({
         provider,
         request: body,
