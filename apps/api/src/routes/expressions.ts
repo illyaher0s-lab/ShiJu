@@ -90,4 +90,23 @@ export async function registerExpressionRoutes(app: FastifyInstance) {
       occurrences: toCamelCase(occurrencesResult.rows),
     });
   });
+  
+  // Delete expression sense (soft delete)
+  app.delete('/expressions/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = 'user-1'; // TODO: from auth
+    
+    const result = await query(
+      `UPDATE expression_senses 
+       SET deleted_at = NOW() 
+       WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+      [id, userId]
+    );
+    
+    if (result.rowCount === 0) {
+      return reply.code(404).send({ error: 'Expression sense not found' });
+    }
+    
+    return reply.send({ success: true });
+  });
 }

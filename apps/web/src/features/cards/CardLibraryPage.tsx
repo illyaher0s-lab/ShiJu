@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Search, BookOpen, Target, Award } from 'lucide-react';
-import { listExpressions, type ExpressionSense } from '../../api/articles';
+import { Search, BookOpen, Target, Edit2, Trash2, X } from 'lucide-react';
+import { listExpressions, deleteExpression, type ExpressionSense } from '../../api/articles';
 
 export function CardLibraryPage() {
   const [expressions, setExpressions] = useState<ExpressionSense[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadExpressions();
@@ -31,6 +36,59 @@ export function CardLibraryPage() {
     e.preventDefault();
     loadExpressions();
   }
+  
+  function toggleEditMode() {
+    setEditMode(!editMode);
+    setSelectedIds(new Set());
+  }
+  
+  function toggleSelection(id: string) {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  }
+  
+  function selectAll() {
+    setSelectedIds(new Set(expressions.map(e => e.id)));
+  }
+  
+  function deselectAll() {
+    setSelectedIds(new Set());
+  }
+  
+  async function handleBatchDelete() {
+    if (selectedIds.size === 0) return;
+    
+    const confirmed = window.confirm(
+      `Delete ${selectedIds.size} expression${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+    
+    setDeleting(true);
+    
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map(id => deleteExpression(id))
+      );
+      
+      // Reload list
+      await loadExpressions();
+      
+      // Exit edit mode
+      setEditMode(false);
+      setSelectedIds(new Set());
+    } catch (err) {
+      console.error('Failed to delete expressions:', err);
+      alert('Failed to delete some expressions. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   function getStatusColor(status: string) {
     switch (status) {
@@ -38,7 +96,7 @@ export function CardLibraryPage() {
       case 'learning': return '#f59e0b';
       case 'reviewing': return '#8b5cf6';
       case 'mastered': return '#10b981';
-      default: return 'var(--vercel-gray-500)';
+      default: return 'var(--gray-500)';
     }
   }
 
@@ -55,11 +113,78 @@ export function CardLibraryPage() {
   return (
     <>
       <header style={{ marginBottom: 'var(--space-4)' }}>
-        <h1>Library</h1>
-        <p style={{ color: 'var(--vercel-gray-600)', marginTop: 'var(--space-1)' }}>
-          {loading ? 'Loading...' : `${expressions.length} expression cards`}
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1>Library</h1>
+            <p style={{ color: 'var(--gray-600)', marginTop: 'var(--space-1)' }}>
+              {loading ? 'Loading...' : `${expressions.length} expression card${expressions.length !== 1 ? 's' : ''}`}
+            </p>
+          </div>
+          
+          {!editMode ? (
+            <button
+              className="btn btn-secondary"
+              onClick={toggleEditMode}
+              disabled={expressions.length === 0}
+            >
+              <Edit2 size={16} />
+              Edit
+            </button>
+          ) : (
+            <button className="btn btn-secondary" onClick={toggleEditMode}>
+              <X size={16} />
+              Cancel
+            </button>
+          )}
+        </div>
       </header>
+
+      {/* Edit Mode Toolbar */}
+      {editMode && (
+        <div
+          style={{
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-3)',
+            marginBottom: 'var(--space-3)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            maxWidth: '800px',
+          }}
+        >
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+            <span style={{ fontSize: '14px', color: 'var(--gray-700)' }}>
+              {selectedIds.size} selected
+            </span>
+            <button
+              className="btn btn-secondary"
+              onClick={selectAll}
+              style={{ fontSize: '13px', padding: '4px 12px' }}
+            >
+              Select All
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={deselectAll}
+              style={{ fontSize: '13px', padding: '4px 12px' }}
+              disabled={selectedIds.size === 0}
+            >
+              Deselect All
+            </button>
+          </div>
+          
+          <button
+            className="btn btn-danger"
+            onClick={handleBatchDelete}
+            disabled={selectedIds.size === 0 || deleting}
+          >
+            <Trash2 size={16} />
+            {deleting ? 'Deleting...' : `Delete (${selectedIds.size})`}
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <div style={{ marginBottom: 'var(--space-3)', maxWidth: '800px' }}>
@@ -121,76 +246,87 @@ export function CardLibraryPage() {
       {/* Cards List */}
       {loading ? (
         <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '800px' }}>
-          <p style={{ color: 'var(--vercel-gray-600)' }}>Loading cards...</p>
+          <p style={{ color: 'var(--gray-600)' }}>Loading cards...</p>
         </div>
       ) : expressions.length === 0 ? (
         <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '800px' }}>
-          <BookOpen size={48} color="var(--vercel-gray-400)" style={{ marginBottom: 'var(--space-3)' }} />
+          <BookOpen size={48} color="var(--gray-400)" style={{ marginBottom: 'var(--space-3)' }} />
           <h3 style={{ marginBottom: 'var(--space-2)' }}>No cards yet</h3>
-          <p style={{ color: 'var(--vercel-gray-600)' }}>
+          <p style={{ color: 'var(--gray-600)' }}>
             {statusFilter ? `No cards in "${getStatusLabel(statusFilter)}" status` : 'Import an article to get started'}
           </p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-3)', maxWidth: '800px' }}>
-          {expressions.map((expr) => (
-            <div
-              key={expr.id}
-              className="card"
-              style={{
-                padding: 'var(--space-3)',
-                cursor: 'pointer',
-                transition: 'box-shadow 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0px 0px 0px 1px rgba(0,0,0,0.12)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0px 0px 0px 1px rgba(0,0,0,0.08)';
-              }}
-            >
-              <div style={{ marginBottom: 'var(--space-2)' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 'var(--space-1)' }}>
-                  {expr.expression}
-                </h3>
-                <p style={{ fontSize: '14px', color: 'var(--vercel-gray-600)' }}>
-                  {expr.meaningZh}
-                </p>
-              </div>
+          {expressions.map((expr) => {
+            const isSelected = selectedIds.has(expr.id);
+            
+            return (
+              <div
+                key={expr.id}
+                className="card"
+                style={{
+                  padding: 'var(--space-3)',
+                  cursor: editMode ? 'pointer' : 'default',
+                  transition: 'box-shadow 0.2s, border-color 0.2s',
+                  border: isSelected ? '2px solid #3b82f6' : '1px solid rgba(0,0,0,0.08)',
+                  background: isSelected ? '#eff6ff' : 'white',
+                }}
+                onClick={() => editMode && toggleSelection(expr.id)}
+                onMouseEnter={(e) => {
+                  if (!editMode) {
+                    e.currentTarget.style.boxShadow = '0px 0px 0px 1px rgba(0,0,0,0.12)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!editMode) {
+                    e.currentTarget.style.boxShadow = '0px 0px 0px 1px rgba(0,0,0,0.08)';
+                  }
+                }}
+              >
+                <div style={{ marginBottom: 'var(--space-2)' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 'var(--space-1)' }}>
+                    {expr.expression}
+                  </h3>
+                  <p style={{ fontSize: '14px', color: 'var(--gray-600)' }}>
+                    {expr.meaningZh}
+                  </p>
+                </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', fontSize: '12px' }}>
-                <span
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    background: getStatusColor(expr.masteryStatus),
-                    color: 'white',
-                    fontWeight: '500',
-                  }}
-                >
-                  {getStatusLabel(expr.masteryStatus)}
-                </span>
-                
-                <span style={{ color: 'var(--vercel-gray-500)' }}>
-                  {expr.type}
-                </span>
-                
-                <span style={{ color: 'var(--vercel-gray-500)' }}>
-                  {expr.difficulty}
-                </span>
-                
-                <span style={{ color: 'var(--vercel-gray-500)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Target size={12} />
-                  {expr.reviewCount} reviews
-                </span>
-                
-                <span style={{ color: 'var(--vercel-gray-500)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <BookOpen size={12} />
-                  {expr.occurrenceCount} contexts
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', fontSize: '12px' }}>
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      background: getStatusColor(expr.masteryStatus),
+                      color: 'white',
+                      fontWeight: '500',
+                    }}
+                  >
+                    {getStatusLabel(expr.masteryStatus)}
+                  </span>
+                  
+                  <span style={{ color: 'var(--gray-500)' }}>
+                    {expr.type}
+                  </span>
+                  
+                  <span style={{ color: 'var(--gray-500)' }}>
+                    {expr.difficulty}
+                  </span>
+                  
+                  <span style={{ color: 'var(--gray-500)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Target size={12} />
+                    {expr.reviewCount} reviews
+                  </span>
+                  
+                  <span style={{ color: 'var(--gray-500)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <BookOpen size={12} />
+                    {expr.occurrenceCount} contexts
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </>

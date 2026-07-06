@@ -148,3 +148,15 @@ export async function getExpression(id: string): Promise<{
   if (!response.ok) throw new Error('Failed to get expression');
   return response.json();
 }
+
+export async function deleteExpression(expressionId: string): Promise<{ success: boolean }> {
+  const response = await fetch(`${API_BASE}/expressions/${expressionId}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to delete expression');
+  }
+  
+  return response.json();
+}
