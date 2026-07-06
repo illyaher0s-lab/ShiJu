@@ -69,6 +69,7 @@ export interface ExpressionSense {
   masteryStatus: MasteryStatus;
   srsDueAt: string | null;
   reviewCount: number;
+  occurrenceCount: number;
   mistakeCount: number;
   easeFactor: number;
   intervalDays: number;

@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { BarChart3, BookOpen, Library, ListChecks } from "lucide-react";
-import { getDueExpressions, submitReviewFeedback, getReviewStats } from "../../api/articles";
+import { useState, useEffect } from 'react';
+import { RotateCcw, CheckCircle, AlertCircle } from 'lucide-react';
+import { getDueReviews, submitReviewFeedback } from '../../api/articles';
 import type { ExpressionSense } from '@art/domain';
 
 export function ReviewPage() {
