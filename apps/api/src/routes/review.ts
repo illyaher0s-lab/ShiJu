@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { query } from '../db/client';
+import { toCamelCase, toCamelCaseRow, stringToNumber, stringToNumberArray } from '../lib/dbRowTransformer';
 
 export async function registerReviewRoutes(app: FastifyInstance) {
   // Get cards due for review
@@ -30,8 +31,11 @@ export async function registerReviewRoutes(app: FastifyInstance) {
       [userId]
     );
     
+    const camelCaseExpressions = toCamelCase(result.rows);
+    const expressions = stringToNumberArray(camelCaseExpressions, ['occurrenceCount', 'reviewCount']);
+    
     return reply.send({ 
-      expressions: result.rows,
+      expressions,
       total: result.rowCount || 0,
     });
   });
@@ -183,22 +187,21 @@ export async function registerReviewRoutes(app: FastifyInstance) {
     
     if (!stats) {
       return reply.send({
-        dueCount: '0',
-        newCount: '0',
-        learningCount: '0',
-        reviewingCount: '0',
-        masteredCount: '0',
-        totalCount: '0',
+        dueCount: 0,
+        newCount: 0,
+        learningCount: 0,
+        reviewCount: 0,
+        masteredCount: 0,
+        totalCount: 0,
       });
     }
     
-    return reply.send({
-      dueCount: stats!.due_count,
-      newCount: stats!.new_count,
-      learningCount: stats!.learning_count,
-      reviewingCount: stats!.review_count,
-      masteredCount: stats!.mastered_count,
-      totalCount: stats!.total_count,
-    });
+    const camelStats = toCamelCaseRow(stats);
+    const numericStats = stringToNumber(camelStats, [
+      'dueCount', 'newCount', 'learningCount', 
+      'reviewCount', 'masteredCount', 'totalCount'
+    ]);
+    
+    return reply.send(numericStats);
   });
 }

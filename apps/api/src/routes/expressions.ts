@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { query } from '../db/client';
+import { toCamelCase, toCamelCaseRow, stringToNumberArray } from '../lib/dbRowTransformer';
 
 export async function registerExpressionRoutes(app: FastifyInstance) {
   // Get all expression senses with filtering
@@ -48,8 +49,11 @@ export async function registerExpressionRoutes(app: FastifyInstance) {
     
     const result = await query(sql, params);
     
+    const camelCaseExpressions = toCamelCase(result.rows);
+    const expressions = stringToNumberArray(camelCaseExpressions, ['occurrenceCount', 'reviewCount', 'mistakeCount']);
+    
     return reply.send({ 
-      expressions: result.rows,
+      expressions,
       total: result.rowCount || 0,
     });
   });
@@ -82,8 +86,8 @@ export async function registerExpressionRoutes(app: FastifyInstance) {
     );
     
     return reply.send({
-      expression: senseResult.rows[0],
-      occurrences: occurrencesResult.rows,
+      expression: toCamelCaseRow(senseResult.rows[0]),
+      occurrences: toCamelCase(occurrencesResult.rows),
     });
   });
 }

@@ -1,9 +1,10 @@
+import type { FastifyInstance } from 'fastify';
 import { segmentArticleText, type Article, type Segment, type CandidateExpression } from "@art/domain";
-import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { createGenerationProvider, generateFirstSegment } from "../services/generationService";
-import { query } from "../db/client";
+import { query } from '../db/client';
 import { randomUUID } from "crypto";
+import { toCamelCase } from '../lib/dbRowTransformer';
 
 const importArticleSchema = z.object({
   title: z.string().min(1),
@@ -272,9 +273,9 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at,
-      segment_count: row.segment_count,
-      read_count: row.read_count,
-      generated_count: row.generated_count,
+      segmentCount: row.segment_count,
+      readCount: row.read_count,
+      generatedCount: row.generated_count,
     }));
     return reply.send({ articles });
   });
@@ -295,8 +296,8 @@ export async function registerArticleRoutes(app: FastifyInstance) {
     );
 
     return reply.send({
-      segments: segmentsRes.rows,
-      candidates: candidatesRes.rows,
+      segments: toCamelCase(segmentsRes.rows),
+      candidates: toCamelCase(candidatesRes.rows),
     });
   });
 }
