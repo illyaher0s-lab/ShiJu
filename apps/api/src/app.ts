@@ -6,10 +6,12 @@ import { registerManualSelectionRoutes } from "./routes/manualSelection";
 import { registerReviewRoutes } from "./routes/review";
 import { registerSyncRoutes } from "./routes/sync";
 import { registerExpressionRoutes } from "./routes/expressions";
+import { healthRoutes } from "./routes/health";
 
 export function buildApp() {
   const app = Fastify({ logger: true });
   app.register(cors, { origin: true });
+  app.register(healthRoutes);
   app.register(registerArticleRoutes);
   app.register(registerReviewRoutes);
   app.register(registerExpressionRoutes);
