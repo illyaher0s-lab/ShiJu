@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://43.128.11.119:3001';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/shiju/api';
 
 export interface Article {
   id: string;
