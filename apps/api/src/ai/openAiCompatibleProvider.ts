@@ -59,7 +59,7 @@ const CREATE_CANDIDATES_TOOL = {
               },
               local_meaning: {
                 type: "string",
-                description: "Chinese translation specific to this context"
+                description: "English definition specific to this context"
               },
               sentence: {
                 type: "string",
@@ -113,6 +113,8 @@ export function buildGenerationPrompt(segmentText: string): string {
     "Identify phrasal verbs, collocations, idioms, and other useful expressions.",
     "For each candidate:",
     "- type: classify as phrasal_verb, collocation, idiom, sentence_pattern, or other",
+    "- meaning_zh: Chinese translation of the general meaning",
+    "- local_meaning: English definition specific to this context (NOT Chinese)",
     "- difficulty: assign CEFR level (A2, B1, B2, C1, C2)",
     "- candidate_status: 'selected' for top 15-20 expressions, 'backup_candidate' for alternatives, 'ignored_too_easy' for common words, 'ignored_duplicate' for repeats, 'ignored_over_limit' if exceeding quota",
     "- value_score: 1-10 based on usefulness for learners",
