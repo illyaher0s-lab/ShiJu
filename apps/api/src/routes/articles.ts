@@ -262,7 +262,21 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       [userId]
     );
 
-    return reply.send({ articles: articlesRes.rows });
+    // Transform snake_case to camelCase for frontend
+    const articles = articlesRes.rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      title: row.title,
+      sourceType: row.source_type,
+      rawText: row.raw_text,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      deletedAt: row.deleted_at,
+      segment_count: row.segment_count,
+      read_count: row.read_count,
+      generated_count: row.generated_count,
+    }));
+    return reply.send({ articles });
   });
 
   // Get article segments
