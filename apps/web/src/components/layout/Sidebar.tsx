@@ -6,7 +6,7 @@ export function Sidebar() {
   
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/import', label: 'Import', icon: Book },
+    { path: '/import', label: 'Articles', icon: Book },
     { path: '/library', label: 'Library', icon: Library },
     { path: '/review', label: 'Review', icon: RotateCcw },
   ];

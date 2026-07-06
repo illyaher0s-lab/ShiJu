@@ -17,6 +17,9 @@ export interface Article {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  segmentCount?: number;
+  readCount?: number;
+  generatedCount?: number;
 }
 
 export interface Segment {

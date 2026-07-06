@@ -13,6 +13,20 @@ const importArticleSchema = z.object({
 });
 
 export async function registerArticleRoutes(app: FastifyInstance) {
+  // Delete article (soft delete)
+  app.delete("/articles/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = "user-1"; // TODO: from auth
+    const now = new Date().toISOString();
+
+    await query(
+      `UPDATE articles SET deleted_at = $1, updated_at = $2 WHERE id = $3 AND user_id = $4 AND deleted_at IS NULL`,
+      [now, now, id, userId]
+    );
+
+    return { success: true };
+  });
+
   app.post("/articles", async (request, reply) => {
     const input = importArticleSchema.parse(request.body);
     const now = new Date().toISOString();

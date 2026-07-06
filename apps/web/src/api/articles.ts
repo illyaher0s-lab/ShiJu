@@ -45,6 +45,18 @@ export async function importArticle(data: {
 // Alias for backward compatibility
 export const createArticle = importArticle;
 
+export async function deleteArticle(articleId: string): Promise<{ success: boolean }> {
+  const response = await fetch(`${API_BASE}/articles/${articleId}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to delete article');
+  }
+  
+  return response.json();
+}
+
 export async function listArticles(): Promise<Article[]> {
   const response = await fetch(`${API_BASE}/articles`);
   if (!response.ok) throw new Error('Failed to list articles');

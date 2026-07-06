@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, BookOpen, Clock } from 'lucide-react';
-import { importArticle, listArticles, type Article } from '../../api/articles';
+import { Upload, FileText, CheckCircle, AlertCircle, BookOpen, Clock, Edit2, Trash2, X } from 'lucide-react';
+import { importArticle, listArticles, deleteArticle, type Article } from '../../api/articles';
 
 export function ArticleListPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [showImportForm, setShowImportForm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
   
   // Import form state
   const [title, setTitle] = useState('');
@@ -64,6 +67,48 @@ export function ArticleListPage() {
     }
   }
 
+  async function handleBatchDelete() {
+    if (selectedArticles.size === 0) return;
+    
+    if (!confirm(`Delete ${selectedArticles.size} article(s)? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await Promise.all(
+        Array.from(selectedArticles).map(id => deleteArticle(id))
+      );
+      
+      setSelectedArticles(new Set());
+      setEditMode(false);
+      await loadArticles();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Failed to delete articles');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function toggleArticleSelection(articleId: string) {
+    const newSelected = new Set(selectedArticles);
+    if (newSelected.has(articleId)) {
+      newSelected.delete(articleId);
+    } else {
+      newSelected.add(articleId);
+    }
+    setSelectedArticles(newSelected);
+  }
+
+  function toggleSelectAll() {
+    if (selectedArticles.size === articles.length) {
+      setSelectedArticles(new Set());
+    } else {
+      setSelectedArticles(new Set(articles.map(a => a.id)));
+    }
+  }
+
   function formatDate(dateString: string) {
     const date = new Date(dateString);
     const now = new Date();
@@ -85,13 +130,52 @@ export function ArticleListPage() {
             {loading ? 'Loading...' : `${articles.length} articles imported`}
           </p>
         </div>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowImportForm(!showImportForm)}
-        >
-          <Upload size={16} />
-          {showImportForm ? 'Cancel' : 'Import Article'}
-        </button>
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          {!editMode ? (
+            <>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setEditMode(true)}
+                disabled={articles.length === 0}
+              >
+                <Edit2 size={16} />
+                Edit
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowImportForm(!showImportForm)}
+              >
+                <Upload size={16} />
+                {showImportForm ? 'Cancel' : 'Import Article'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => {
+                  setEditMode(false);
+                  setSelectedArticles(new Set());
+                }}
+              >
+                <X size={16} />
+                Cancel
+              </button>
+              <button 
+                className="btn"
+                onClick={handleBatchDelete}
+                disabled={selectedArticles.size === 0 || deleting}
+                style={{
+                  background: selectedArticles.size > 0 ? '#dc2626' : undefined,
+                  color: selectedArticles.size > 0 ? 'white' : undefined,
+                }}
+              >
+                <Trash2 size={16} />
+                {deleting ? 'Deleting...' : `Delete (${selectedArticles.size})`}
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       {success && (
@@ -209,6 +293,23 @@ export function ArticleListPage() {
         </div>
       )}
 
+      {/* Edit Mode Header */}
+      {editMode && articles.length > 0 && (
+        <div style={{ marginBottom: 'var(--space-3)', maxWidth: '1000px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={selectedArticles.size === articles.length}
+              onChange={toggleSelectAll}
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '14px', color: 'var(--vercel-gray-600)' }}>
+              Select all ({articles.length})
+            </span>
+          </label>
+        </div>
+      )}
+
       {/* Articles List */}
       {loading ? (
         <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '1000px' }}>
@@ -229,54 +330,77 @@ export function ArticleListPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', maxWidth: '1000px' }}>
           {articles.map((article) => (
-            <a
+            <div
               key={article.id}
-              href={`/reading/${article.id}`}
               className="card"
               style={{
                 padding: 'var(--space-3)',
-                textDecoration: 'none',
-                color: 'inherit',
-                display: 'block',
+                display: 'flex',
+                gap: 'var(--space-3)',
+                alignItems: 'flex-start',
                 transition: 'box-shadow 0.2s',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0px 0px 0px 1px rgba(0,0,0,0.12)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0px 0px 0px 1px rgba(0,0,0,0.08)';
-              }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 'var(--space-1)' }}>
-                    {article.title}
-                  </h3>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: 'var(--vercel-gray-600)', 
-                    marginBottom: 'var(--space-2)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {article.rawText.substring(0, 120)}...
-                  </p>
-                  <div style={{ display: 'flex', gap: 'var(--space-3)', fontSize: '13px', color: 'var(--vercel-gray-500)' }}>
-                    <span>
-                      {(article as any).segment_count || 0} segments
-                    </span>
-                    <span>
-                      {(article as any).generated_count || 0} generated
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
-                      <Clock size={12} />
-                      {formatDate(article.createdAt)}
-                    </span>
+              {editMode && (
+                <input
+                  type="checkbox"
+                  checked={selectedArticles.has(article.id)}
+                  onChange={() => toggleArticleSelection(article.id)}
+                  style={{ 
+                    width: '18px', 
+                    height: '18px', 
+                    marginTop: '2px',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+              <a
+                href={editMode ? undefined : `/shiju/reading/${article.id}`}
+                style={{
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  display: 'block',
+                  flex: 1,
+                  cursor: editMode ? 'default' : 'pointer',
+                }}
+                onClick={(e) => {
+                  if (editMode) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 'var(--space-1)' }}>
+                      {article.title}
+                    </h3>
+                    <p style={{ 
+                      fontSize: '14px', 
+                      color: 'var(--vercel-gray-600)', 
+                      marginBottom: 'var(--space-2)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {article.rawText.substring(0, 120)}...
+                    </p>
+                    <div style={{ display: 'flex', gap: 'var(--space-3)', fontSize: '13px', color: 'var(--vercel-gray-500)' }}>
+                      <span>
+                        {article.segmentCount || 0} segments
+                      </span>
+                      <span>
+                        {article.generatedCount || 0} generated
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                        <Clock size={12} />
+                        {formatDate(article.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </a>
+              </a>
+            </div>
           ))}
         </div>
       )}
