@@ -2,6 +2,14 @@ import type { CandidateExpression, ManualSelectionGenerationRequest, ManualSelec
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/shiju/api';
 
+function generateFallbackUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 interface BuildManualSelectionDraftInput {
   selectedText: string;
   sentence: string;
@@ -14,7 +22,7 @@ export async function buildManualSelectionDraft(
   input: BuildManualSelectionDraftInput
 ): Promise<CandidateExpression> {
   const request: ManualSelectionGenerationRequest = {
-    clientOperationId: crypto.randomUUID(),
+    clientOperationId: self.crypto?.randomUUID?.() || generateFallbackUUID(),
     userId: 'user-1',
     articleId: input.articleId,
     segmentId: input.segmentId,
