@@ -16,6 +16,7 @@ export function ReadingPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generatingCard, setGeneratingCard] = useState(false);
   
   // Manual selection state
   const [selectedText, setSelectedText] = useState('');
@@ -102,6 +103,9 @@ export function ReadingPage() {
     const currentSegment = segments[currentIndex];
     if (!currentSegment) return;
     
+    setGeneratingCard(true);
+    setShowToolbar(false);
+    
     try {
       const sentence = extractSentenceContaining(currentSegment.text, text);
       
@@ -114,10 +118,11 @@ export function ReadingPage() {
       });
       
       setGeneratedDraft(draft);
-      setShowToolbar(false);
     } catch (err) {
       console.error('Failed to generate card:', err);
       alert(err instanceof Error ? err.message : 'Failed to generate card');
+    } finally {
+      setGeneratingCard(false);
     }
   }
 
@@ -411,6 +416,46 @@ export function ReadingPage() {
             Back to Articles
           </button>
         </div>
+      )}
+
+      {/* Generating Card Loading */}
+      {generatingCard && (
+        <>
+          {/* Backdrop */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.3)',
+              zIndex: 999,
+            }}
+          />
+          {/* Loading Dialog */}
+          <div
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'white',
+              padding: 'var(--space-5)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              zIndex: 1000,
+              textAlign: 'center',
+              minWidth: '240px',
+            }}
+          >
+            <div style={{ fontSize: '32px', marginBottom: 'var(--space-3)' }}>✨</div>
+            <div style={{ fontSize: '16px', color: 'var(--gray-700)', fontWeight: 500 }}>Generating card...</div>
+            <div style={{ fontSize: '13px', color: 'var(--gray-500)', marginTop: 'var(--space-2)' }}>
+              This may take a few seconds
+            </div>
+          </div>
+        </>
       )}
 
       {/* Generated Draft Sheet */}
