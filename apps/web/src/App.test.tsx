@@ -2,7 +2,43 @@ import "@testing-library/jest-dom/vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { App } from "./App";
+import { MemoryRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Sidebar } from "./components/layout/Sidebar";
+import { HomePage } from "./features/home/HomePage";
+import { ReadingPage } from "./features/reading/ReadingPage";
+import { ReviewPage } from "./features/review/ReviewPage";
+import { CardLibraryPage } from "./features/cards/CardLibraryPage";
+import { ArticleListPage } from "./features/articles/ArticleListPage";
+import { ArticleDetailPage } from "./features/articles/ArticleDetailPage";
+import "./styles.css";
+
+// Test wrapper that mimics App structure but uses MemoryRouter
+function TestApp() {
+  return (
+    <div className="app-container">
+      <Sidebar />
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/import" element={<ArticleListPage />} />
+          <Route path="/library" element={<CardLibraryPage />} />
+          <Route path="/review" element={<ReviewPage />} />
+          <Route path="/reading" element={<ReadingPage />} />
+          <Route path="/articles/:id" element={<ArticleDetailPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
+function renderApp() {
+  return render(
+    <MemoryRouter initialEntries={["/"]}>
+      <TestApp />
+    </MemoryRouter>
+  );
+}
 
 afterEach(() => {
   vi.useRealTimers();
@@ -11,7 +47,7 @@ afterEach(() => {
 
 describe("App", () => {
   it("opens to the learning home dashboard first", () => {
-    render(<App />);
+    renderApp();
 
     expect(screen.getByRole("heading", { name: "Today" })).toBeInTheDocument();
     expect(screen.getByText("New cards today")).toBeInTheDocument();
@@ -24,7 +60,7 @@ describe("App", () => {
   });
 
   it("uses home actions to jump into the learning surfaces", async () => {
-    render(<App />);
+    renderApp();
 
     await userEvent.click(screen.getByRole("button", { name: "Continue reading" }));
     expect(screen.getByRole("heading", { name: "Read first, learn in place" })).toBeInTheDocument();
@@ -35,7 +71,7 @@ describe("App", () => {
   });
 
   it("adds a context-generated card to the card library", async () => {
-    render(<App />);
+    renderApp();
 
     await userEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("button", { name: "Cards" }));
     await userEvent.type(screen.getByLabelText("Expression"), "buff");
@@ -48,7 +84,7 @@ describe("App", () => {
   });
 
   it("queues reading actions as pending sync operations", async () => {
-    render(<App />);
+    renderApp();
 
     await userEvent.click(screen.getByRole("button", { name: "Continue reading" }));
     await userEvent.click(screen.getByRole("button", { name: "roll out" }));
@@ -63,7 +99,7 @@ describe("App", () => {
   it("marks a review card as mastered while keeping it in the card library", async () => {
     vi.useFakeTimers();
 
-    render(<App />);
+    renderApp();
 
     fireEvent.click(screen.getByRole("button", { name: "Review due cards" }));
     fireEvent.pointerDown(screen.getByRole("button", { name: "鐭ラ亾" }));

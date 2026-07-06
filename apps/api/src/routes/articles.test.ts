@@ -70,12 +70,15 @@ describe('POST /articles', () => {
   });
   
   it('should create multiple segments for long text', async () => {
+    // Create text with multiple paragraphs to trigger segmentation
+    const longText = Array(3).fill('word '.repeat(200)).join('\n\n');
+    
     const response = await app.inject({
       method: 'POST',
       url: '/articles',
       payload: {
         title: 'Test',
-        rawText: 'word '.repeat(500),
+        rawText: longText,
         sourceType: 'txt',
       },
     });
