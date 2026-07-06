@@ -12,6 +12,7 @@ export function ReadingPage() {
   const navigate = useNavigate();
   
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [candidates, setCandidates] = useState<CandidateExpression[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +55,7 @@ export function ReadingPage() {
     try {
       const result = await getArticleSegments(articleId);
       setSegments(result.segments);
+      setCandidates(result.candidates);
       setCurrentIndex(0);
     } catch (err) {
       console.error('Failed to load segments:', err);
@@ -83,22 +85,27 @@ export function ReadingPage() {
     setSelectedText('');
   }
 
-  function handleGenerateCard(text: string) {
+  async function handleGenerateCard(text: string) {
     if (!articleId) return;
     
     const currentSegment = segments[currentIndex];
     if (!currentSegment) return;
     
-    const draft = buildManualSelectionDraft({
-      selectedText: text,
-      sentence: currentSegment.text,
-      articleId,
-      segmentId: currentSegment.id,
-      generatedAt: new Date().toISOString(),
-    });
-    
-    setGeneratedDraft(draft);
-    setShowToolbar(false);
+    try {
+      const draft = await buildManualSelectionDraft({
+        selectedText: text,
+        sentence: currentSegment.text,
+        articleId,
+        segmentId: currentSegment.id,
+        generatedAt: new Date().toISOString(),
+      });
+      
+      setGeneratedDraft(draft);
+      setShowToolbar(false);
+    } catch (err) {
+      console.error('Failed to generate card:', err);
+      alert(err instanceof Error ? err.message : 'Failed to generate card');
+    }
   }
 
   function handleAcceptDraft(draft: CandidateExpression) {
@@ -112,6 +119,82 @@ export function ReadingPage() {
   function handleDismissDraft() {
     setGeneratedDraft(null);
     clearSelection();
+  }
+
+  function highlightText(text: string, candidatesForSegment: CandidateExpression[]) {
+    if (candidatesForSegment.length === 0) {
+      return <>{text}</>;
+    }
+
+    // Sort by expression length (descending) to match longer phrases first
+    const sorted = [...candidatesForSegment].sort((a, b) => 
+      b.expression.length - a.expression.length
+    );
+
+    const parts: JSX.Element[] = [];
+    let remaining = text;
+    let keyOffset = 0;
+
+    sorted.forEach(candidate => {
+      const tempParts: JSX.Element[] = [];
+      let tempRemaining = remaining;
+      let tempOffset = keyOffset;
+      let matched = false;
+
+      let idx = tempRemaining.indexOf(candidate.expression);
+      while (idx !== -1) {
+        matched = true;
+        
+        // Add text before match
+        if (idx > 0) {
+          tempParts.push(
+            <span key={`text-${tempOffset}`}>{tempRemaining.slice(0, idx)}</span>
+          );
+        }
+        
+        // Add highlighted match
+        tempParts.push(
+          <mark
+            key={`mark-${tempOffset}-${idx}`}
+            style={{
+              cursor: 'pointer',
+              background: '#fef3c7',
+              padding: '2px 4px',
+              borderRadius: '3px',
+            }}
+            onClick={() => {
+              setGeneratedDraft(candidate);
+            }}
+          >
+            {candidate.expression}
+          </mark>
+        );
+
+        tempOffset += idx + candidate.expression.length;
+        tempRemaining = tempRemaining.slice(idx + candidate.expression.length);
+        idx = tempRemaining.indexOf(candidate.expression);
+      }
+
+      if (matched) {
+        parts.push(...tempParts);
+        if (tempRemaining) {
+          parts.push(<span key={`text-end-${tempOffset}`}>{tempRemaining}</span>);
+        }
+        remaining = tempRemaining;
+        keyOffset = tempOffset;
+      }
+    });
+
+    // If no matches, return original text
+    if (parts.length === 0) {
+      return <>{text}</>;
+    }
+
+    return <>{parts}</>;
+  }
+
+  function handleCandidateClick(candidate: CandidateExpression) {
+    setGeneratedDraft(candidate);
   }
 
   if (loading) {
@@ -228,7 +311,10 @@ export function ReadingPage() {
             userSelect: 'text',
           }}
         >
-          {currentSegment.text}
+          {highlightText(
+            currentSegment.text,
+            candidates.filter(c => c.segmentId === currentSegment.id)
+          )}
         </div>
 
         <div
