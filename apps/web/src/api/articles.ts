@@ -1,48 +1,15 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/shiju/api';
 
-export interface Article {
-  id: string;
-  userId: string;
-  title: string;
-  sourceType: 'txt' | 'markdown';
-  rawText: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Import shared types from domain package
+import type { 
+  Article, 
+  Segment, 
+  CandidateExpression, 
+  ExpressionSense 
+} from '@art/domain';
 
-export interface Segment {
-  id: string;
-  articleId: string;
-  sequence: number;
-  text: string;
-  wordCount: number;
-  generationStatus: string;
-  progressStatus: string;
-}
-
-export interface CandidateExpression {
-  id: string;
-  expression: string;
-  normalizedForm: string;
-  type: string;
-  meaningZh: string;
-  difficulty: string;
-  candidateStatus: string;
-}
-
-export interface ExpressionSense {
-  id: string;
-  expression: string;
-  normalizedForm: string;
-  type: string;
-  meaningZh: string;
-  difficulty: string;
-  masteryStatus: string;
-  srsDueAt: string;
-  reviewCount: number;
-  occurrenceCount: number;
-}
-
+// ReviewStats not in domain package - keep local definition
+// Note: backend returns 'reviewCount', but we keep 'reviewingCount' for backward compatibility
 export interface ReviewStats {
   dueCount: number;
   newCount: number;
@@ -124,7 +91,17 @@ export async function submitReviewFeedback(
 export async function getReviewStats(): Promise<ReviewStats> {
   const response = await fetch(`${API_BASE}/review/stats`);
   if (!response.ok) throw new Error('Failed to get review stats');
-  return response.json();
+  const data = await response.json();
+  
+  // Backend returns 'reviewCount', map to 'reviewingCount' for frontend compatibility
+  return {
+    dueCount: data.dueCount,
+    newCount: data.newCount,
+    learningCount: data.learningCount,
+    reviewingCount: data.reviewCount,  // Map reviewCount -> reviewingCount
+    masteredCount: data.masteredCount,
+    totalCount: data.totalCount,
+  };
 }
 
 // Expressions
