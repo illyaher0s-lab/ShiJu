@@ -222,6 +222,30 @@ sudo systemctl reload nginx
 
 ### 4. 常见问题
 
+#### 前端页面空白，浏览器报错 "Failed to load module script"
+
+**症状**：点击文章进入详情页时页面空白，浏览器控制台报错：
+```
+Failed to load module script: Expected a JavaScript module script 
+but the server responded with a MIME type of "text/html"
+```
+
+**根因**：nginx `alias` 指令在正则 location 中路径解析错误，导致静态资源返回 301 重定向，最终 fallback 到 index.html
+
+**解决**：
+1. 检查 `/etc/nginx/sites-available/shiju` 配置
+2. 静态资源 location 必须使用 `root` 而非 `alias`：
+   ```nginx
+   location ^~ /shiju/assets/ {
+       root /var/www;  # 不是 alias /var/www/shiju/
+       expires 1y;
+       add_header Cache-Control "public, immutable";
+   }
+   ```
+3. 验证修复：`bash ~/ShiJu/tests/nginx-routing.test.sh`
+
+**已修复**：2026-07-07
+
 #### API 请求 404 或返回 HTML
 
 **原因**：前端构建时使用了错误的 API URL
