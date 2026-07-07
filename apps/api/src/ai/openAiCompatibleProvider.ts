@@ -269,13 +269,24 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
       if (!Array.isArray(toolArgs.candidates)) {
         if (typeof toolArgs.candidates === 'string') {
           console.warn(`[LLM] 'candidates' is a string, attempting to parse as JSON...`);
+          console.warn(`[LLM] Full candidates string length: ${toolArgs.candidates.length} chars`);
+          console.warn(`[LLM] First 500 chars: ${toolArgs.candidates.substring(0, 500)}`);
+          console.warn(`[LLM] Last 500 chars: ${toolArgs.candidates.substring(Math.max(0, toolArgs.candidates.length - 500))}`);
           try {
             toolArgs.candidates = JSON.parse(toolArgs.candidates);
             console.log(`[LLM] Successfully parsed candidates string into array (length: ${toolArgs.candidates.length})`);
           } catch (parseError) {
             console.error(`[LLM] Failed to parse candidates string as JSON:`, parseError);
-            console.error(`[LLM] candidates value (first 500 chars): ${String(toolArgs.candidates).substring(0, 500)}`);
-            throw new Error(`Expected 'candidates' to be an array, got string that failed JSON parsing`);
+            console.error(`[LLM] Error position: ${(parseError as any).message}`);
+            // 打印出错位置附近的内容
+            const errorPos = parseInt((parseError as any).message.match(/position (\d+)/)?.[1] || '0');
+            if (errorPos > 0) {
+              const contextStart = Math.max(0, errorPos - 200);
+              const contextEnd = Math.min(toolArgs.candidates.length, errorPos + 200);
+              console.error(`[LLM] Context around error (position ${errorPos}):`);
+              console.error(toolArgs.candidates.substring(contextStart, contextEnd));
+            }
+            throw new Error(`Expected 'candidates' to be an array, got string that failed JSON parsing: ${(parseError as any).message}`);
           }
         } else {
           console.error(`[LLM] 'candidates' field is not an array. Type: ${typeof toolArgs.candidates}`);

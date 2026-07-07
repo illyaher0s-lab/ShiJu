@@ -203,6 +203,14 @@ export async function callLLM(config: LLMClientConfig, options: LLMCallOptions):
     const toolCalls = payload.choices?.[0]?.message?.tool_calls;
     const finishReason = payload.choices?.[0]?.finish_reason;
     
+    // Log tool_calls for debugging
+    if (toolCalls && toolCalls.length > 0) {
+      console.log(`[LLM] Received tool_calls, count: ${toolCalls.length}`);
+      console.log(`[LLM] First tool call: ${toolCalls[0].function.name}`);
+      console.log(`[LLM] Arguments length: ${toolCalls[0].function.arguments.length} chars`);
+      console.log(`[LLM] finish_reason: ${finishReason}`);
+    }
+    
     if (typeof content !== 'string' && !toolCalls) {
       throw new LLMError(
         LLMErrorType.INVALID_RESPONSE,
