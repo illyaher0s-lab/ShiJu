@@ -1,6 +1,6 @@
 # ShiJu - 架构文档
 
-**最后更新**：2026-06-15
+**最后更新**：2026-07-07
 
 ---
 
@@ -104,7 +104,15 @@ apps/web/src/
 - **Fastify**：高性能 HTTP 框架
 - **TypeScript**：类型安全
 - **PostgreSQL 16**：关系数据库（权威数据源）
-- **轻量级任务队列**：内存队列（后续可升级为 BullMQ）
+- **systemd**：进程管理和自动重启
+
+### 部署状态
+- **服务器**：43.128.11.119
+- **API 端口**：3001
+- **健康检查**：GET /health
+- **进程管理**：systemd user service (shiju-api.service)
+- **环境配置**：通过 EnvironmentFile 加载 .env
+- **备份策略**：每日 2 AM 自动备份，30天保留
 
 ### 目录结构
 
@@ -165,10 +173,15 @@ OpenAI 兼容 Provider (openAiCompatibleProvider.ts)
 - `RATE_LIMIT`：429 响应
 - `UNKNOWN`：其他错误
 
-**Mock Provider**：
-- 本地开发和测试使用
+### Mock Provider
+- 本地开发和测试使用（`AI_PROVIDER=mock`）
 - 返回确定性结果（如选中文本 "all at once" 返回固定卡片）
 - 不产生网络调用和 API 费用
+
+**生产环境**：
+- 使用 OpenAI 兼容 Provider（`AI_PROVIDER=openai_compatible`）
+- 支持 tool calling（create_candidate_expressions）
+- 配置通过环境变量：AI_BASE_URL, AI_API_KEY, AI_MODEL
 
 ---
 
@@ -494,46 +507,38 @@ pnpm test:llm
 ### V1 不支持
 - PDF 导入
 - 网页导入
-- 多用户账户系统（当前只有默认 user_id）
-- 社区内容
-- 课程系统
+- 多用户账户系统（当前单用户模式）
+- 社区内容和课程系统
 - 知识图谱
-- 复杂的同义词合并
-- 完整的 FSRS 优化和参数训练
-- 永久句子卡片（只有 ExpressionSense）
-- 长篇语法课
-- 每个表达式的多个生成例句
-- 不经过 AI 的原始手动卡片创建
-- 考试风格练习
+- 离线 PWA（已移除）
 - 原生移动 app
 
 ---
 
 ## 技术债务和改进方向
 
-### 当前技术债务
-1. **内存任务队列**：不持久化，服务器重启会丢失任务
-2. **单用户模式**：user_id 硬编码，缺少认证
-3. **Mock AI Provider**：生成结果固定，无法验证真实质量
+### 当前限制
+1. **单用户模式**：user_id 硬编码为 "user-1"，无认证系统
+2. **HTTP only**：HTTPS 待配置
+3. **语境卡片生成**：前端已实现，后端 API 待集成
+4. **离线支持**：已移除 PWA 基础设施
 
 ### 下一步改进
-1. 引入 BullMQ 替代内存队列
-2. 添加 JWT 认证和用户注册
-3. 连接真实 LLM API 并验证生成质量
+1. 添加用户认证（JWT + 注册/登录）
+2. 配置 HTTPS（Let's Encrypt）
+3. 完成语境卡片生成后端 API
 4. 添加 prompt 版本管理和 A/B 测试
-5. 引入 FSRS 算法替代 SM-2
+5. 引入 FSRS 算法替代 SM-2（可选）
 
 ---
 
 ## 参考文档
 
-- **V1 设计规格**：`docs/superpowers/specs/2026-06-13-ai-reading-trainer-v1-design.md`
-- **MVP 实施计划**：`docs/superpowers/plans/2026-06-13-ai-reading-trainer-mvp-implementation.md`
-- **开发状态**：`docs/development/STATUS.md`
 - **API 调用规范**：`API_RULES.md`
 - **数据库 schema**：`apps/api/src/db/schema.sql`
-- **部署交接文档**：`docs/deployment/server-agent-handoff.md`
+- **V1 设计规格**：`docs/superpowers/specs/` 
+- **历史交付文档**：`docs/archive/`
 
 ---
 
-**最后更新**：2026-06-15
+**最后更新**：2026-07-07

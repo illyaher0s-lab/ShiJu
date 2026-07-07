@@ -265,9 +265,22 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
         return { candidates: [] };
       }
 
+      // Handle case where LLM returns candidates as a JSON string instead of array
       if (!Array.isArray(toolArgs.candidates)) {
-        console.error(`[LLM] 'candidates' field is not an array. Type: ${typeof toolArgs.candidates}`);
-        throw new Error(`Expected 'candidates' to be an array, got ${typeof toolArgs.candidates}`);
+        if (typeof toolArgs.candidates === 'string') {
+          console.warn(`[LLM] 'candidates' is a string, attempting to parse as JSON...`);
+          try {
+            toolArgs.candidates = JSON.parse(toolArgs.candidates);
+            console.log(`[LLM] Successfully parsed candidates string into array (length: ${toolArgs.candidates.length})`);
+          } catch (parseError) {
+            console.error(`[LLM] Failed to parse candidates string as JSON:`, parseError);
+            console.error(`[LLM] candidates value (first 500 chars): ${String(toolArgs.candidates).substring(0, 500)}`);
+            throw new Error(`Expected 'candidates' to be an array, got string that failed JSON parsing`);
+          }
+        } else {
+          console.error(`[LLM] 'candidates' field is not an array. Type: ${typeof toolArgs.candidates}`);
+          throw new Error(`Expected 'candidates' to be an array, got ${typeof toolArgs.candidates}`);
+        }
       }
 
       const rawCandidatesLength = toolArgs.candidates.length;

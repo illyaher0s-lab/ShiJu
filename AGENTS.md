@@ -1,6 +1,6 @@
 # ShiJu - Agent Working Rules
 
-**Last Updated**: 2026-06-15  
+**Last Updated**: 2026-07-07  
 **Purpose**: 强制执行的代码修改和调试规范，防止低质量修复和隐性 bug。
 
 ---
@@ -19,34 +19,25 @@
 
 ---
 
-## Rule 0 — Two-Track Ownership Boundary
+## Rule 0 — Deployment Status (Updated)
 
-**Codex 本地轨（本仓库）**：
-- ✅ 前端 PWA 实现
-- ✅ 后端 API 契约定义
-- ✅ Mock AI providers
-- ✅ 数据库 schema 和 migrations
-- ✅ 本地测试和浏览器验证
-- ✅ 文档和交接规格
+**已完成（生产运行中）**：
+- ✅ 云服务器部署（43.128.11.119）
+- ✅ 真实 LLM API 集成（OpenAI 兼容，带 tool calling）
+- ✅ 环境变量配置（.env 通过 EnvironmentFile）
+- ✅ systemd 进程管理（shiju-api.service）
+- ✅ 数据库备份（每日 2 AM，30天保留）
+- ✅ 前端部署（Nginx，/shiju/ 路径）
 
-**Server Agent 轨（尚未启动）**：
-- ❌ 云服务器部署
-- ❌ 真实 LLM API 集成
-- ❌ 密钥管理
-- ❌ HTTPS 和进程管理
-- ❌ 日志和备份
+**当前约束**：
+- 单用户模式（userId 硬编码为 "user-1"）
+- HTTP only（HTTPS 待配置）
+- 密钥通过环境变量管理（不提交到 git）
 
-**强制约束**：
-- Codex **不得**部署到服务器
-- Codex **不得**连接真实 LLM API（只能用 mock provider）
-- Codex **不得**处理生产密钥
-- Codex **不得**配置 HTTPS 或反向代理
-
-**正确做法**：
-- 定义 API 契约（接口、请求/响应格式、错误处理）
-- 实现 mock provider 返回确定性结果
-- 编写 schema 和 migrations
-- 编写服务器交接文档（`docs/deployment/server-agent-handoff.md`）
+**开发建议**：
+- 本地开发使用 `AI_PROVIDER=mock` 避免 API 费用
+- 修改 API 后需重启服务：`systemctl --user restart shiju-api`
+- 前端修改后需重新构建：`pnpm build:web` + 复制到 Nginx 目录
 
 ---
 
@@ -399,4 +390,4 @@ AI_MODEL=claude-sonnet-4-6
 
 ---
 
-**最后更新**：2026-06-15
+**最后更新**：2026-07-07

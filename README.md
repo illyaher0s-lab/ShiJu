@@ -22,31 +22,29 @@ ShiJu 不是休闲阅读工具，也不是完整的英语学习平台。它验�
 
 ## 当前状态
 
-**阶段**：本地 MVP 验证（前端 fixture 驱动 + 后端契约层完成）  
+**阶段**：单用户生产运行  
 **分支**：`codex/ai-reading-trainer-roadmap`  
-**最后更新**：2026-06-15
+**最后更新**：2026-07-07  
+**访问地址**：http://43.128.11.119/shiju/
 
 ### ✅ 已实现
-- 前端 PWA（React + Vite + IndexedDB）
-- 阅读页面：原文高亮、弹层释义、更多表达式区域
-- 复习页面：到期队列、主动回忆、中文反馈按钮
-- 卡片库：ExpressionSense 列表、Occurrence 证据查看
-- 文章导入入口（fixture 模式）
-- 手动选择 AI 生成卡片（前端 mock + 后端契约）
-- 语境卡片生成（游戏/编程/工作等真实场景，前端 mock + 后端契约）
-- 后端 API 骨架（Fastify + TypeScript）
-- PostgreSQL schema（articles, segments, candidate_expressions, expression_senses, occurrences, review_logs, client_operations, ai_generation_jobs）
-- 离线操作队列（IndexedDB）
-- 同步 API 契约（幂等性，基于 client_operation_id）
-- SM-2 兼容 SRS 调度（ease_factor, interval_days, lapse_count）
+- 前端 Web 应用（React + Vite，Vercel 设计风格）
+- 阅读页面：原文高亮、手动选择生成卡片
+- 复习页面：SM-2 算法、4级反馈按钮
+- 卡片库：ExpressionSense 列表、批量删除
+- 文章导入：完整表单、自动分段
+- 手动选择生成：真实 LLM 调用（OpenAI 兼容 API）
+- 后端 API（Fastify + PostgreSQL，systemd 托管）
+- SM-2 复习系统（GET /review/due, POST /review/feedback）
+- 数据库持久化（8 张表）
+- 每日数据库备份（2 AM，30天保留）
 
 ### ❌ 尚未实现
-- 真实文件解析（TXT/Markdown）
-- 真实 AI 生成（LLM 调用）
-- 真实 PostgreSQL 持久化
-- 真实 IndexedDB 同步
-- 用户认证
-- 服务器部署
+- 用户认证（当前硬编码 userId="user-1"）
+- 语境卡片生成后端 API
+- Article List 页面
+- 离线 PWA 支持（已移除）
+- HTTPS 配置
 
 ---
 
@@ -126,18 +124,17 @@ ShiJu/
 
 ---
 
-## 本地运行
+## 本地开发
 
 ### 前端
 ```bash
 pnpm install
-pnpm dev:web
+pnpm dev:web          # http://localhost:5173
 ```
-访问 `http://localhost:5173`
 
-### 后端（当前 MVP 阶段不需要）
+### 后端
 ```bash
-pnpm dev:api
+pnpm dev:api          # http://localhost:3001
 ```
 
 ### 测试
@@ -146,29 +143,27 @@ pnpm test              # 全部测试
 pnpm test:web          # 前端测试
 pnpm test:api          # 后端测试
 pnpm test:domain       # 领域逻辑测试
-pnpm test:llm          # LLM API 集成测试（需要真实 API key）
 ```
 
----
+### 生产部署
 
-## 两轨制开发
+**前端**：
+```bash
+pnpm build:web
+# 复制 apps/web/dist/ 到 Nginx 目录
+```
 
-### Codex 本地轨（本仓库）
-- 前端 PWA 实现
-- 后端 API 契约定义
-- 数据库 schema
-- Mock AI providers
-- 本地测试和浏览器验证
-- 文档和交接规格
+**后端**：
+```bash
+systemctl --user restart shiju-api
+systemctl --user status shiju-api
+```
 
-### Server Agent 轨（尚未启动）
-- 云服务器部署
-- 真实 LLM API 集成
-- 密钥管理
-- HTTPS 和进程管理
-- 日志和备份
-
-**边界规则**：Codex **不**部署到服务器、不连接真实 LLM API、不处理生产密钥、不配置 HTTPS。Codex **只**定义 API 契约、实现 mock providers、编写 schema 和 migrations、编写服务器交接文档。
+**数据库备份**：
+```bash
+# 自动运行（每日 2 AM）
+# 手动触发：~/scripts/backup-db.sh
+```
 
 ---
 
@@ -268,16 +263,25 @@ SRS 复习事件记录（feedback, rating, previous/next due_at, ease_factor, in
 
 ## 接下来做什么
 
-查看 `STATUS.md` 了解当前进展。查看 `docs/superpowers/plans/2026-06-13-ai-reading-trainer-mvp-implementation.md` 了解剩余任务。
+**优先级 P0（核心功能补全）**：
+- Article List 页面（显示已导入的文章列表）
+- 文章详情页（段落导航、跳转到阅读页）
+- 语境卡片生成后端 API 集成
 
-当 MVP 验证完成后，Server Agent 可以根据 `docs/deployment/server-agent-handoff.md` 执行部署。
+**优先级 P1（用户体验）**：
+- 用户认证系统
+- 前端加载状态优化
+- 错误提示优化
+
+**优先级 P2（生产就绪）**：
+- HTTPS 配置
+- API 错误监控
+- 性能优化
+
+查看 **STATUS.md** 了解当前完整状态。
+
+查看 **docs/archive/** 了解历史交付文档。
 
 ---
 
-## 许可证
-
-私有项目，暂无开源计划。
-
----
-
-**最后更新**：2026-06-15
+**最后更新**：2026-07-07

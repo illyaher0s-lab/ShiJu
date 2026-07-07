@@ -272,7 +272,7 @@ export function ArticleListPage() {
               disabled={!title.trim() || !text.trim() || importing}
             >
               <Upload size={16} />
-              {importing ? 'Importing...' : 'Import Article'}
+              Import Article
             </button>
 
             <button className="btn btn-secondary" disabled>
@@ -308,6 +308,46 @@ export function ArticleListPage() {
             </span>
           </label>
         </div>
+      )}
+
+      {/* Importing Loading Dialog */}
+      {importing && (
+        <>
+          {/* Backdrop */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.3)',
+              zIndex: 999,
+            }}
+          />
+          {/* Loading Dialog */}
+          <div
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'white',
+              padding: 'var(--space-5)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              zIndex: 1000,
+              textAlign: 'center',
+              minWidth: '280px',
+            }}
+          >
+            <div style={{ fontSize: '32px', marginBottom: 'var(--space-3)' }}>📚</div>
+            <div style={{ fontSize: '16px', color: 'var(--gray-700)', fontWeight: 500 }}>Importing article...</div>
+            <div style={{ fontSize: '13px', color: 'var(--gray-500)', marginTop: 'var(--space-2)' }}>
+              Segmenting text and generating expressions
+            </div>
+          </div>
+        </>
       )}
 
       {/* Articles List */}
