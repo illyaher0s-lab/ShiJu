@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
-import { getArticleSegments } from '../../api/articles';
+import { getArticleSegments, generateSegmentCandidates } from '../../api/articles';
 import type { Segment, CandidateExpression } from '@art/domain';
 import { SelectionToolbar } from './SelectionToolbar';
 import { GeneratedCardDraftSheet } from './GeneratedCardDraftSheet';
@@ -17,6 +17,7 @@ export function ReadingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatingCard, setGeneratingCard] = useState(false);
+  const [generatingSegment, setGeneratingSegment] = useState(false);
   
   // Manual selection state
   const [selectedText, setSelectedText] = useState('');
@@ -28,6 +29,14 @@ export function ReadingPage() {
       loadSegments();
     }
   }, [articleId]);
+
+  useEffect(() => {
+    // Generate candidates for current segment if needed
+    const currentSegment = segments[currentIndex];
+    if (currentSegment && currentSegment.generationStatus === 'not_generated' && !generatingSegment) {
+      generateCurrentSegment();
+    }
+  }, [currentIndex, segments]);
 
   useEffect(() => {
     // Listen for text selection
@@ -63,6 +72,40 @@ export function ReadingPage() {
       setError(err instanceof Error ? err.message : 'Failed to load article');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function generateCurrentSegment() {
+    const currentSegment = segments[currentIndex];
+    if (!currentSegment) return;
+
+    setGeneratingSegment(true);
+    setError(null);
+
+    try {
+      const result = await generateSegmentCandidates(currentSegment.id);
+      
+      // Update segment status
+      setSegments(prev => prev.map(seg => 
+        seg.id === currentSegment.id 
+          ? { ...seg, generationStatus: 'generated' }
+          : seg
+      ));
+      
+      // Add new candidates
+      setCandidates(prev => [...prev, ...result.candidates]);
+    } catch (err) {
+      console.error('Failed to generate segment:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate candidates');
+      
+      // Mark as failed
+      setSegments(prev => prev.map(seg => 
+        seg.id === currentSegment.id 
+          ? { ...seg, generationStatus: 'failed' }
+          : seg
+      ));
+    } finally {
+      setGeneratingSegment(false);
     }
   }
 
@@ -329,6 +372,30 @@ export function ReadingPage() {
           />
         </div>
       </div>
+
+
+      {/* Generating indicator */}
+      {generatingSegment && (
+        <div
+          className="card"
+          style={{
+            padding: 'var(--space-4)',
+            marginBottom: 'var(--space-3)',
+            maxWidth: '800px',
+            textAlign: 'center',
+            background: '#fffbeb',
+            border: '1px solid #fbbf24',
+          }}
+        >
+          <div style={{ fontSize: '24px', marginBottom: 'var(--space-2)' }}>✨</div>
+          <p style={{ fontSize: '16px', fontWeight: '500', marginBottom: 'var(--space-1)' }}>
+            Generating highlights...
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--vercel-gray-600)' }}>
+            AI is analyzing this segment
+          </p>
+        </div>
+      )}
 
       {/* Segment content */}
       <div className="card" style={{ padding: 'var(--space-5)', marginBottom: 'var(--space-3)', maxWidth: '800px', position: 'relative' }}>

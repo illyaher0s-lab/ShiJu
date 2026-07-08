@@ -77,185 +77,13 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       });
     }
 
-    // Generate candidates for first segment
-    console.log(`[ARTICLES] Starting generation for first segment (id: ${segments[0]?.id})`);
-    const generated = await generateFirstSegment({
-      provider: createGenerationProvider(),
-      segments,
-    });
-    console.log(`[ARTICLES] Generated candidates.length: ${generated.candidates.length}`);
-
-    // HARD LIMIT: Refuse to process if candidates > 50
-    if (generated.candidates.length > 50) {
-      console.error(`[ARTICLES] HARD LIMIT EXCEEDED: candidates.length = ${generated.candidates.length} > 50. Refusing to write to database.`);
-      throw new Error(`Generated ${generated.candidates.length} candidates, exceeding hard limit of 50. This indicates a prompt or parsing error. Aborting to prevent database pollution.`);
-    }
-
-    // Helper: normalize difficulty to CEFR level
-    function normalizeDifficulty(difficulty: any): string {
-      if (typeof difficulty === 'string' && ['A2', 'B1', 'B2', 'C1', 'C2'].includes(difficulty)) {
-        return difficulty;
-      }
-      const num = Number(difficulty);
-      if (num <= 3) return 'A2';
-      if (num <= 5) return 'B1';
-      if (num <= 7) return 'B2';
-      if (num <= 9) return 'C1';
-      return 'C2';
-    }
-
-    // Save candidates to database
-    const candidates: CandidateExpression[] = [];
-    const expressionSenseMap = new Map<string, string>(); // normalized_form+type+meaningZh -> expressionSenseId
-
-    console.log(`[ARTICLES] Starting to write ${generated.candidates.length} candidates to database...`);
-    let writtenCount = 0;
-    let skippedCount = 0;
-
-    for (const candidate of generated.candidates) {
-      // Skip candidates with missing required fields
-      if (!candidate.expression || !candidate.normalizedForm || !candidate.type || !candidate.meaningZh) {
-        console.warn('[ARTICLES] Skipping candidate with missing required fields:', JSON.stringify(candidate));
-        skippedCount++;
-        continue;
-      }
-      
-      writtenCount++;
-
-      const candidateId = randomUUID();
-      const normalizedDifficulty = normalizeDifficulty(candidate.difficulty);
-      
-      // Insert into candidate_expressions
-      await query(
-        `INSERT INTO candidate_expressions (
-          id, user_id, article_id, segment_id, expression, normalized_form, type,
-          meaning_zh, local_meaning, sentence, sentence_translation, syntax_hint,
-          difficulty, value_score, candidate_status, status_reason, occurrence_count,
-          model_provider, model_name, prompt_version, generation_version, generated_at, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
-        [
-          candidateId,
-          userId,
-          articleId,
-          segments[0]?.id,
-          candidate.expression,
-          candidate.normalizedForm,
-          candidate.type,
-          candidate.meaningZh,
-          candidate.localMeaning || '',
-          candidate.sentence || '',
-          candidate.sentenceTranslation || '',
-          candidate.syntaxHint || null,
-          normalizedDifficulty,
-          candidate.valueScore || 50,
-          candidate.candidateStatus || 'selected',
-          candidate.statusReason || '',
-          candidate.occurrenceCount || 1,
-          candidate.modelProvider || "unknown",
-          candidate.modelName || "unknown",
-          candidate.promptVersion || "v1",
-          candidate.generationVersion || "v1",
-          candidate.generatedAt || now,
-          now,
-          now,
-        ]
-      );
-      candidates.push({ 
-        ...candidate, 
-        id: candidateId, 
-        userId, 
-        articleId, 
-        segmentId: segments[0]?.id || '',
-        difficulty: normalizedDifficulty as any 
-      });
-
-      // Only create expression_senses and occurrences for 'selected' candidates
-      if (candidate.candidateStatus === 'selected') {
-        const senseKey = `${candidate.normalizedForm}|${candidate.type}|${candidate.meaningZh}`;
-        let expressionSenseId = expressionSenseMap.get(senseKey);
-
-        if (!expressionSenseId) {
-          // Check if expression_sense already exists
-          const existingSense = await query(
-            `SELECT id FROM expression_senses 
-             WHERE user_id = $1 AND normalized_form = $2 AND type = $3 AND meaning_zh = $4 AND deleted_at IS NULL`,
-            [userId, candidate.normalizedForm, candidate.type, candidate.meaningZh]
-          );
-
-          if (existingSense.rows.length > 0) {
-            expressionSenseId = existingSense.rows[0].id;
-          } else {
-            // Create new expression_sense
-            expressionSenseId = randomUUID();
-            await query(
-              `INSERT INTO expression_senses (
-                id, user_id, expression, normalized_form, type, meaning_zh, difficulty,
-                mastery_status, srs_due_at, review_count, mistake_count, ease_factor,
-                interval_days, lapse_count, created_at, updated_at
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
-              [
-                expressionSenseId,
-                userId,
-                candidate.expression,
-                candidate.normalizedForm,
-                candidate.type,
-                candidate.meaningZh,
-                normalizedDifficulty,
-                'new',
-                now, // srs_due_at: immediately available for review
-                0,    // review_count
-                0,    // mistake_count
-                2.5,  // ease_factor (default)
-                0,    // interval_days
-                0,    // lapse_count
-                now,
-                now,
-              ]
-            );
-          }
-          expressionSenseMap.set(senseKey, expressionSenseId!); // expressionSenseId is guaranteed to be defined here
-        }
-
-        // Create occurrence
-        const occurrenceId = randomUUID();
-        await query(
-          `INSERT INTO occurrences (
-            id, user_id, expression_sense_id, source_type, article_id, segment_id,
-            sentence, sentence_translation, local_meaning, syntax_hint, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-          [
-            occurrenceId,
-            userId,
-            expressionSenseId,
-            'article',
-            articleId,
-            segments[0]?.id,
-            candidate.sentence || '',
-            candidate.sentenceTranslation || '',
-            candidate.localMeaning || '',
-            candidate.syntaxHint || null,
-            now,
-            now,
-          ]
-        );
-      }
-    }
-
-    console.log(`[ARTICLES] Database write complete. Written: ${writtenCount}, Skipped: ${skippedCount}, Final candidates.length: ${candidates.length}`);
-
-    // Update first segment status
-    if (segments[0]) {
-      await query(
-        `UPDATE segments SET generation_status = $1, updated_at = $2 WHERE id = $3`,
-        ["generated", now, segments[0].id]
-      );
-      segments[0].generationStatus = "generated";
-    }
+    // Don't generate any segments on import - generate on-demand when user navigates to them
+    console.log(`[ARTICLES] Article imported with ${segments.length} segments. Generation will happen on-demand.`);
 
     return reply.code(201).send({
       article,
       segments,
-      candidates,
+      candidates: [], // No candidates generated yet
     });
   });
 
@@ -313,5 +141,234 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       segments: toCamelCase(segmentsRes.rows),
       candidates: toCamelCase(candidatesRes.rows),
     });
+  });
+}
+
+  // Generate candidates for a specific segment (on-demand)
+  app.post("/segments/:segmentId/generate", async (request, reply) => {
+    const { segmentId } = request.params as { segmentId: string };
+    const userId = "user-1"; // TODO: from auth
+    const now = new Date().toISOString();
+
+    // Get segment
+    const segmentRes = await query<Segment>(
+      `SELECT * FROM segments WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+      [segmentId, userId]
+    );
+
+    if (segmentRes.rows.length === 0) {
+      return reply.code(404).send({ error: "Segment not found" });
+    }
+
+    const segment = toCamelCase(segmentRes.rows)[0];
+
+    // Check if already generated
+    if (segment.generationStatus === "generated") {
+      const candidatesRes = await query<CandidateExpression>(
+        `SELECT * FROM candidate_expressions WHERE segment_id = $1 AND user_id = $2`,
+        [segmentId, userId]
+      );
+      return reply.send({
+        segment,
+        candidates: toCamelCase(candidatesRes.rows),
+      });
+    }
+
+    // Mark as generating
+    await query(
+      `UPDATE segments SET generation_status = $1, updated_at = $2 WHERE id = $3`,
+      ["generating", now, segmentId]
+    );
+
+    try {
+      // Generate candidates
+      console.log(`[SEGMENTS] Starting generation for segment ${segmentId}`);
+      const provider = createGenerationProvider();
+      const result = await provider.generateSegment(segment);
+      console.log(`[SEGMENTS] Generated ${result.candidates.length} candidates`);
+
+      // HARD LIMIT: Refuse to process if candidates > 50
+      if (result.candidates.length > 50) {
+        console.error(`[SEGMENTS] HARD LIMIT EXCEEDED: ${result.candidates.length} > 50`);
+        await query(
+          `UPDATE segments SET generation_status = $1, updated_at = $2 WHERE id = $3`,
+          ["failed", now, segmentId]
+        );
+        throw new Error(`Generated ${result.candidates.length} candidates, exceeding hard limit of 50.`);
+      }
+
+      // Helper: normalize difficulty
+      function normalizeDifficulty(difficulty: any): string {
+        if (typeof difficulty === 'string' && ['A2', 'B1', 'B2', 'C1', 'C2'].includes(difficulty)) {
+          return difficulty;
+        }
+        const num = Number(difficulty);
+        if (num <= 3) return 'A2';
+        if (num <= 5) return 'B1';
+        if (num <= 7) return 'B2';
+        if (num <= 9) return 'C1';
+        return 'C2';
+      }
+
+      // Save candidates to database
+      const candidates: CandidateExpression[] = [];
+      const expressionSenseMap = new Map<string, string>();
+
+      for (const candidate of result.candidates) {
+        if (!candidate.expression || !candidate.normalizedForm || !candidate.type || !candidate.meaningZh) {
+          console.warn('[SEGMENTS] Skipping candidate with missing fields');
+          continue;
+        }
+
+        const candidateId = randomUUID();
+        const normalizedDifficulty = normalizeDifficulty(candidate.difficulty);
+
+        // Insert candidate_expression
+        await query(
+          `INSERT INTO candidate_expressions (
+            id, user_id, article_id, segment_id, expression, normalized_form, type,
+            meaning_zh, local_meaning, sentence, sentence_translation, syntax_hint,
+            difficulty, value_score, candidate_status, status_reason, occurrence_count,
+            model_provider, model_name, prompt_version, generation_version, generated_at, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
+          [
+            candidateId,
+            userId,
+            segment.articleId,
+            segmentId,
+            candidate.expression,
+            candidate.normalizedForm,
+            candidate.type,
+            candidate.meaningZh,
+            candidate.localMeaning || '',
+            candidate.sentence || '',
+            candidate.sentenceTranslation || '',
+            candidate.syntaxHint || null,
+            normalizedDifficulty,
+            candidate.valueScore || 5,
+            candidate.candidateStatus || 'backup_candidate',
+            candidate.statusReason || '',
+            candidate.occurrenceCount || 1,
+            candidate.modelProvider || 'unknown',
+            candidate.modelName || 'unknown',
+            candidate.promptVersion || 'v1',
+            candidate.generationVersion || 'v1',
+            candidate.generatedAt || now,
+            now,
+            now,
+          ]
+        );
+
+        const candidateObj: CandidateExpression = {
+          id: candidateId,
+          userId,
+          articleId: segment.articleId,
+          segmentId,
+          expression: candidate.expression,
+          normalizedForm: candidate.normalizedForm,
+          type: candidate.type,
+          meaningZh: candidate.meaningZh,
+          localMeaning: candidate.localMeaning || '',
+          sentence: candidate.sentence || '',
+          sentenceTranslation: candidate.sentenceTranslation || '',
+          syntaxHint: candidate.syntaxHint || null,
+          difficulty: normalizedDifficulty as any,
+          valueScore: candidate.valueScore || 5,
+          candidateStatus: (candidate.candidateStatus || 'backup_candidate') as any,
+          statusReason: candidate.statusReason || '',
+          occurrenceCount: candidate.occurrenceCount || 1,
+          modelProvider: candidate.modelProvider || 'unknown',
+          modelName: candidate.modelName || 'unknown',
+          promptVersion: candidate.promptVersion || 'v1',
+          generationVersion: candidate.generationVersion || 'v1',
+          generatedAt: candidate.generatedAt || now,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        };
+
+        candidates.push(candidateObj);
+
+        // Handle ExpressionSense
+        const senseKey = `${candidate.normalizedForm}::${candidate.type}::${candidate.meaningZh}`;
+        let expressionSenseId = expressionSenseMap.get(senseKey);
+
+        if (!expressionSenseId) {
+          const existingSenseRes = await query<{ id: string }>(
+            `SELECT id FROM expression_senses 
+             WHERE user_id = $1 AND normalized_form = $2 AND type = $3 AND meaning_zh = $4 AND deleted_at IS NULL`,
+            [userId, candidate.normalizedForm, candidate.type, candidate.meaningZh]
+          );
+
+          if (existingSenseRes.rows.length > 0) {
+            expressionSenseId = existingSenseRes.rows[0]!.id;
+          } else {
+            expressionSenseId = randomUUID();
+            await query(
+              `INSERT INTO expression_senses (
+                id, user_id, expression, normalized_form, type, meaning_zh, difficulty,
+                mastery_status, srs_due_at, review_count, mistake_count, ease_factor,
+                interval_days, lapse_count, created_at, updated_at
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+              [
+                expressionSenseId,
+                userId,
+                candidate.expression,
+                candidate.normalizedForm,
+                candidate.type,
+                candidate.meaningZh,
+                normalizedDifficulty,
+                'new',
+                now,
+                0, 0, 2.5, 0, 0,
+                now, now,
+              ]
+            );
+          }
+          expressionSenseMap.set(senseKey, expressionSenseId);
+        }
+
+        // Create occurrence
+        await query(
+          `INSERT INTO occurrences (
+            id, user_id, expression_sense_id, source_type, article_id, segment_id,
+            sentence, sentence_translation, local_meaning, syntax_hint, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          [
+            randomUUID(),
+            userId,
+            expressionSenseId,
+            'article',
+            segment.articleId,
+            segmentId,
+            candidate.sentence || '',
+            candidate.sentenceTranslation || '',
+            candidate.localMeaning || '',
+            candidate.syntaxHint || null,
+            now, now,
+          ]
+        );
+      }
+
+      // Mark as generated
+      await query(
+        `UPDATE segments SET generation_status = $1, updated_at = $2 WHERE id = $3`,
+        ["generated", now, segmentId]
+      );
+
+      console.log(`[SEGMENTS] Generation complete. Saved ${candidates.length} candidates`);
+
+      return reply.send({
+        segment: { ...segment, generationStatus: 'generated' },
+        candidates,
+      });
+    } catch (error) {
+      console.error(`[SEGMENTS] Generation failed:`, error);
+      await query(
+        `UPDATE segments SET generation_status = $1, updated_at = $2 WHERE id = $3`,
+        ["failed", now, segmentId]
+      );
+      throw error;
+    }
   });
 }

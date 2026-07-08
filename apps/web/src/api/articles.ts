@@ -160,3 +160,20 @@ export async function deleteExpression(expressionId: string): Promise<{ success:
   
   return response.json();
 }
+
+// Generate candidates for a segment on-demand
+export async function generateSegmentCandidates(segmentId: string): Promise<{
+  segment: Segment;
+  candidates: CandidateExpression[];
+}> {
+  const response = await fetch(`${API_BASE}/segments/${segmentId}/generate`, {
+    method: 'POST',
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to generate candidates');
+  }
+  
+  return response.json();
+}
