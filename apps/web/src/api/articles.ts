@@ -183,6 +183,7 @@ export async function generateContextCard(data: {
   expression: string;
   contextLabel: string;
   contextNote?: string;
+  sentence?: string;
 }): Promise<CandidateExpression> {
   const response = await fetch(`${API_BASE}/cards/context/generate`, {
     method: 'POST',
@@ -193,6 +194,28 @@ export async function generateContextCard(data: {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Failed to generate context card');
+  }
+  
+  return response.json();
+}
+
+
+// Accept and save context card to database
+export async function acceptContextCard(draft: CandidateExpression): Promise<{
+  success: boolean;
+  expressionSenseId: string;
+  occurrenceId: string;
+  existed: boolean;
+}> {
+  const response = await fetch(`${API_BASE}/cards/accept`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(draft),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to save card');
   }
   
   return response.json();

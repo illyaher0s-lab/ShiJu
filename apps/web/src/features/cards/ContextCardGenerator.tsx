@@ -11,6 +11,7 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
   const [expression, setExpression] = useState("");
   const [contextLabel, setContextLabel] = useState("");
   const [contextNote, setContextNote] = useState("");
+  const [sentence, setSentence] = useState("");
   const [draft, setDraft] = useState<CandidateExpression | null>(null);
 
   const [generating, setGenerating] = useState(false);
@@ -24,6 +25,7 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
         expression,
         contextLabel,
         contextNote,
+        sentence,
       });
       setDraft(draft);
     } catch (err) {

@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { registerArticleRoutes } from "./routes/articles";
 import { registerContextGenerationRoutes } from "./routes/contextGeneration";
+import { registerCardAcceptRoutes } from "./routes/cardAccept";
 import { registerManualSelectionRoutes } from "./routes/manualSelection";
 import { registerReviewRoutes } from "./routes/review";
 import { registerSyncRoutes } from "./routes/sync";
@@ -18,5 +19,6 @@ export function buildApp() {
   app.register(registerSyncRoutes);
   app.register(registerManualSelectionRoutes);
   app.register(registerContextGenerationRoutes);
+  app.register(registerCardAcceptRoutes);
   return app;
 }

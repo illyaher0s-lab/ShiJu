@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, BookOpen, Target, Edit2, Trash2, X, Plus, ChevronDown, ChevronUp } from 'lucide-react';
-import { listExpressions, deleteExpression, type ExpressionSense } from '../../api/articles';
+import { listExpressions, deleteExpression, acceptContextCard, type ExpressionSense } from '../../api/articles';
 import { ContextCardGenerator } from './ContextCardGenerator';
 import type { CandidateExpression } from '@art/domain';
 
@@ -64,12 +64,21 @@ export function CardLibraryPage() {
   }
   
   async function handleAcceptContextCard(draft: CandidateExpression) {
-    console.log('Accepting context card:', draft);
-    // TODO: Save to backend via sync API
-    // For now, show success and reload to verify if card appears
-    alert(`Card "${draft.expression}" generated! (Backend save pending)`);
-    setShowContextGenerator(false);
-    await loadExpressions();
+    try {
+      const result = await acceptContextCard(draft);
+      
+      if (result.existed) {
+        alert(`Card "${draft.expression}" already exists! Added as new occurrence.`);
+      } else {
+        alert(`Card "${draft.expression}" saved successfully!`);
+      }
+      
+      setShowContextGenerator(false);
+      await loadExpressions();
+    } catch (err) {
+      console.error('Failed to save card:', err);
+      alert(err instanceof Error ? err.message : 'Failed to save card');
+    }
   }
 
   async function handleBatchDelete() {

@@ -459,6 +459,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
         `A learner encountered this expression: "${request.expression}"`,
         `Context: ${request.contextLabel}`,
         request.contextNote ? `Additional note: ${request.contextNote}` : '',
+        request.sentence ? `Original sentence: "${request.sentence}"` : '',
         '',
         'Generate a learning card with:',
         '- type: phrasal_verb, collocation, idiom, or other',
