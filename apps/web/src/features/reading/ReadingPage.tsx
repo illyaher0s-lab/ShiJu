@@ -140,13 +140,24 @@ export function ReadingPage() {
     clearSelection();
   }
 
+
   function highlightText(text: string, candidatesForSegment: CandidateExpression[]) {
     if (candidatesForSegment.length === 0) {
       return <>{text}</>;
     }
 
+    // Only show 'selected' candidates, top 6 by value_score
+    const selectedCandidates = candidatesForSegment
+      .filter(c => c.candidateStatus === 'selected')
+      .sort((a, b) => (b.valueScore || 0) - (a.valueScore || 0))
+      .slice(0, 6);
+
+    if (selectedCandidates.length === 0) {
+      return <>{text}</>;
+    }
+
     // Sort by expression length (descending) to match longer phrases first
-    const sorted = [...candidatesForSegment].sort((a, b) => 
+    const sorted = [...selectedCandidates].sort((a, b) => 
       b.expression.length - a.expression.length
     );
 
