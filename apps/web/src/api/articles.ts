@@ -177,3 +177,23 @@ export async function generateSegmentCandidates(segmentId: string): Promise<{
   
   return response.json();
 }
+
+// Generate context card with real LLM
+export async function generateContextCard(data: {
+  expression: string;
+  contextLabel: string;
+  contextNote?: string;
+}): Promise<CandidateExpression> {
+  const response = await fetch(`${API_BASE}/cards/context/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to generate context card');
+  }
+  
+  return response.json();
+}

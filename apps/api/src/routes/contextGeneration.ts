@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { ContextEntryGenerationRequest } from "@art/domain";
-import { createMockProvider } from "../ai/mockProvider";
+import { createGenerationProvider } from "../services/generationService";
 import { generateContextEntryDraft } from "../services/contextGenerationService";
 
 export async function registerContextGenerationRoutes(app: FastifyInstance) {
@@ -8,7 +8,7 @@ export async function registerContextGenerationRoutes(app: FastifyInstance) {
     const body = request.body as ContextEntryGenerationRequest;
 
     try {
-      const provider = createMockProvider();
+      const provider = createGenerationProvider();
       const draft = await generateContextEntryDraft({
         provider,
         request: body,

@@ -1,7 +1,7 @@
 import type { CandidateExpression } from "@art/domain";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
-import { buildContextEntryDraft } from "./contextGeneration";
+import { generateContextCard } from "../../api/articles";
 
 interface ContextCardGeneratorProps {
   onAccept: (draft: CandidateExpression) => void;
@@ -13,16 +13,25 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
   const [contextNote, setContextNote] = useState("");
   const [draft, setDraft] = useState<CandidateExpression | null>(null);
 
-  function generate() {
+  const [generating, setGenerating] = useState(false);
+
+  async function generate() {
     if (!expression.trim() || !contextLabel.trim()) return;
-    setDraft(
-      buildContextEntryDraft({
+    
+    setGenerating(true);
+    try {
+      const draft = await generateContextCard({
         expression,
         contextLabel,
         contextNote,
-        generatedAt: new Date().toISOString(),
-      }),
-    );
+      });
+      setDraft(draft);
+    } catch (err) {
+      console.error('Failed to generate context card:', err);
+      alert(err instanceof Error ? err.message : 'Failed to generate card');
+    } finally {
+      setGenerating(false);
+    }
   }
 
   function acceptDraft() {
@@ -60,9 +69,9 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
         </label>
       </div>
 
-      <button className="contextGenerateButton" type="button" onClick={generate}>
+      <button className="contextGenerateButton" type="button" onClick={generate} disabled={generating}>
         <Sparkles size={16} />
-        Generate card
+        {generating ? "Generating..." : "Generate card"}
       </button>
 
       {draft ? (

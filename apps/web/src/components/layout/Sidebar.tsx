@@ -1,4 +1,4 @@
-import { Home, Book, Library, RotateCcw } from 'lucide-react';
+import { Home, Book, BookMarked, RotateCcw } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 
 export function Sidebar() {
@@ -7,7 +7,7 @@ export function Sidebar() {
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/import', label: 'Articles', icon: Book },
-    { path: '/library', label: 'Library', icon: Library },
+    { path: '/library', label: 'Cards', icon: BookMarked },
     { path: '/review', label: 'Review', icon: RotateCcw },
   ];
   

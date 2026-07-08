@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search, BookOpen, Target, Edit2, Trash2, X } from 'lucide-react';
+import { Search, BookOpen, Target, Edit2, Trash2, X, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { listExpressions, deleteExpression, type ExpressionSense } from '../../api/articles';
+import { ContextCardGenerator } from './ContextCardGenerator';
+import type { CandidateExpression } from '@art/domain';
 
 export function CardLibraryPage() {
   const [expressions, setExpressions] = useState<ExpressionSense[]>([]);
@@ -12,6 +14,7 @@ export function CardLibraryPage() {
   const [editMode, setEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [showContextGenerator, setShowContextGenerator] = useState(false);
 
   useEffect(() => {
     loadExpressions();
@@ -60,6 +63,15 @@ export function CardLibraryPage() {
     setSelectedIds(new Set());
   }
   
+  async function handleAcceptContextCard(draft: CandidateExpression) {
+    console.log('Accepting context card:', draft);
+    // TODO: Save to backend via sync API
+    // For now, show success and reload to verify if card appears
+    alert(`Card "${draft.expression}" generated! (Backend save pending)`);
+    setShowContextGenerator(false);
+    await loadExpressions();
+  }
+
   async function handleBatchDelete() {
     if (selectedIds.size === 0) return;
     
