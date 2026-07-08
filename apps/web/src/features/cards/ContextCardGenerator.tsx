@@ -20,13 +20,15 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
     
     setGenerating(true);
     try {
-      const generatedDraft = await generateContextCard({
+      const result = await generateContextCard({
         expression,
         contextLabel,
         contextNote,
         sentence,
       });
-      setDraft(generatedDraft);
+      // Backend returns { candidate, duplicateExpressionSenseId, recommendation, recommendationReason }
+      // Extract the candidate object
+      setDraft(result.candidate);
     } catch (err) {
       console.error('Failed to generate context card:', err);
       alert(err instanceof Error ? err.message : 'Failed to generate card');

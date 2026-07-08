@@ -184,7 +184,12 @@ export async function generateContextCard(data: {
   contextLabel: string;
   contextNote?: string;
   sentence?: string;
-}): Promise<CandidateExpression> {
+}): Promise<{
+  candidate: CandidateExpression;
+  duplicateExpressionSenseId: string | null;
+  recommendation: 'add' | 'merge' | 'reject';
+  recommendationReason: string;
+}> {
   const response = await fetch(`${API_BASE}/cards/context/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
