@@ -453,8 +453,80 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
     },
     
     async generateContextEntryDraft(request) {
-      // TODO: Implement context entry draft generation with LLM
-      throw new Error('Context entry draft generation not yet implemented for OpenAI-compatible provider');
+      console.log(`[LLM] Context generation: "${request.expression}" in ${request.contextLabel} context`);
+      
+      const prompt = [
+        `A learner encountered this expression: "${request.expression}"`,
+        `Context: ${request.contextLabel}`,
+        request.contextNote ? `Additional note: ${request.contextNote}` : '',
+        '',
+        'Generate a learning card with:',
+        '- type: phrasal_verb, collocation, idiom, or other',
+        '- meaning_zh: Chinese translation',
+        '- local_meaning: English definition in this context',
+        '- sentence: example sentence using this expression',
+        '- sentence_translation: Chinese translation of the sentence',
+        '- syntax_hint: usage notes (optional)',
+        '- difficulty: CEFR level (B1, B2, C1, C2)',
+        '- value_score: 1-10',
+      ].filter(Boolean).join('\n');
+
+      const result = await callLLM(llmConfig, {
+        messages: [{ role: 'user', content: prompt }],
+        tools: [{
+          type: 'function' as const,
+          function: {
+            name: 'create_context_card',
+            description: 'Create a vocabulary card from learner context',
+            parameters: {
+              type: 'object',
+              properties: {
+                type: { type: 'string', enum: ['phrasal_verb', 'collocation', 'idiom', 'other'] },
+                meaning_zh: { type: 'string' },
+                local_meaning: { type: 'string' },
+                sentence: { type: 'string' },
+                sentence_translation: { type: 'string' },
+                syntax_hint: { type: 'string' },
+                difficulty: { type: 'string', enum: ['B1', 'B2', 'C1', 'C2'] },
+                value_score: { type: 'number' },
+              },
+              required: ['type', 'meaning_zh', 'local_meaning', 'sentence', 'sentence_translation', 'difficulty', 'value_score'],
+            },
+          },
+        }],
+        toolChoice: { type: 'function', function: { name: 'create_context_card' } },
+      });
+
+      if (!result.toolCalls || result.toolCalls.length === 0) {
+        throw new Error('Model did not call tool for context card generation');
+      }
+
+      const args = JSON.parse(result.toolCalls[0]!.function.arguments);
+      const now = new Date().toISOString();
+
+      return {
+        candidate: {
+          expression: request.expression,
+          normalizedForm: request.expression.toLowerCase().trim(),
+          type: args.type || 'other',
+          meaningZh: args.meaning_zh || '',
+          localMeaning: args.local_meaning || '',
+          sentence: args.sentence || '',
+          sentenceTranslation: args.sentence_translation || '',
+          syntaxHint: args.syntax_hint || null,
+          difficulty: args.difficulty || 'B1',
+          valueScore: args.value_score || 5,
+          candidateStatus: 'selected',
+          statusReason: `Generated from ${request.contextLabel} context`,
+          occurrenceCount: 1,
+          modelProvider: llmConfig.provider,
+          modelName: llmConfig.model,
+          promptVersion: 'context-v1',
+          generationVersion: 'context-v1',
+          generatedAt: now,
+        },
+        generatedAt: now,
+      };
     },
   };
 }
