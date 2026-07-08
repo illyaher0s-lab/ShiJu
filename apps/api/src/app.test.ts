@@ -17,7 +17,7 @@ describe("API app", () => {
     expect(response.statusCode).toBe(201);
     const body = response.json();
     expect(body.article.title).toBe("Sample");
-    expect(body.segments[0].generationStatus).toBe("generated");
+    expect(body.segments[0].generationStatus).toBe("not_generated");
   });
 
   it("accepts pending sync operations idempotently", async () => {

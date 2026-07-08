@@ -83,7 +83,7 @@ export async function registerArticleRoutes(app: FastifyInstance) {
     return reply.code(201).send({
       article,
       segments,
-      candidates: [], // No candidates generated yet
+      candidates: [],
     });
   });
 
@@ -142,7 +142,6 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       candidates: toCamelCase(candidatesRes.rows),
     });
   });
-}
 
   // Generate candidates for a specific segment (on-demand)
   app.post("/segments/:segmentId/generate", async (request, reply) => {
@@ -187,7 +186,7 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       const result = await provider.generateSegment(segment);
       console.log(`[SEGMENTS] Generated ${result.candidates.length} candidates`);
 
-      // HARD LIMIT: Refuse to process if candidates > 50
+      // HARD LIMIT
       if (result.candidates.length > 50) {
         console.error(`[SEGMENTS] HARD LIMIT EXCEEDED: ${result.candidates.length} > 50`);
         await query(
@@ -210,20 +209,18 @@ export async function registerArticleRoutes(app: FastifyInstance) {
         return 'C2';
       }
 
-      // Save candidates to database
+      // Save candidates
       const candidates: CandidateExpression[] = [];
       const expressionSenseMap = new Map<string, string>();
 
       for (const candidate of result.candidates) {
         if (!candidate.expression || !candidate.normalizedForm || !candidate.type || !candidate.meaningZh) {
-          console.warn('[SEGMENTS] Skipping candidate with missing fields');
           continue;
         }
 
         const candidateId = randomUUID();
         const normalizedDifficulty = normalizeDifficulty(candidate.difficulty);
 
-        // Insert candidate_expression
         await query(
           `INSERT INTO candidate_expressions (
             id, user_id, article_id, segment_id, expression, normalized_form, type,
@@ -232,62 +229,36 @@ export async function registerArticleRoutes(app: FastifyInstance) {
             model_provider, model_name, prompt_version, generation_version, generated_at, created_at, updated_at
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
           [
-            candidateId,
-            userId,
-            segment.articleId,
-            segmentId,
-            candidate.expression,
-            candidate.normalizedForm,
-            candidate.type,
-            candidate.meaningZh,
-            candidate.localMeaning || '',
-            candidate.sentence || '',
-            candidate.sentenceTranslation || '',
-            candidate.syntaxHint || null,
-            normalizedDifficulty,
-            candidate.valueScore || 5,
-            candidate.candidateStatus || 'backup_candidate',
-            candidate.statusReason || '',
-            candidate.occurrenceCount || 1,
-            candidate.modelProvider || 'unknown',
-            candidate.modelName || 'unknown',
-            candidate.promptVersion || 'v1',
-            candidate.generationVersion || 'v1',
-            candidate.generatedAt || now,
-            now,
-            now,
+            candidateId, userId, segment.articleId, segmentId,
+            candidate.expression, candidate.normalizedForm, candidate.type,
+            candidate.meaningZh, candidate.localMeaning || '', candidate.sentence || '',
+            candidate.sentenceTranslation || '', candidate.syntaxHint || null,
+            normalizedDifficulty, candidate.valueScore || 5,
+            candidate.candidateStatus || 'backup_candidate', candidate.statusReason || '',
+            candidate.occurrenceCount || 1, candidate.modelProvider || 'unknown',
+            candidate.modelName || 'unknown', candidate.promptVersion || 'v1',
+            candidate.generationVersion || 'v1', candidate.generatedAt || now,
+            now, now,
           ]
         );
 
-        const candidateObj: CandidateExpression = {
-          id: candidateId,
-          userId,
-          articleId: segment.articleId,
-          segmentId,
-          expression: candidate.expression,
-          normalizedForm: candidate.normalizedForm,
-          type: candidate.type,
-          meaningZh: candidate.meaningZh,
-          localMeaning: candidate.localMeaning || '',
-          sentence: candidate.sentence || '',
+        candidates.push({
+          id: candidateId, userId, articleId: segment.articleId, segmentId,
+          expression: candidate.expression, normalizedForm: candidate.normalizedForm,
+          type: candidate.type, meaningZh: candidate.meaningZh,
+          localMeaning: candidate.localMeaning || '', sentence: candidate.sentence || '',
           sentenceTranslation: candidate.sentenceTranslation || '',
           syntaxHint: candidate.syntaxHint || null,
-          difficulty: normalizedDifficulty as any,
-          valueScore: candidate.valueScore || 5,
+          difficulty: normalizedDifficulty as any, valueScore: candidate.valueScore || 5,
           candidateStatus: (candidate.candidateStatus || 'backup_candidate') as any,
-          statusReason: candidate.statusReason || '',
-          occurrenceCount: candidate.occurrenceCount || 1,
+          statusReason: candidate.statusReason || '', occurrenceCount: candidate.occurrenceCount || 1,
           modelProvider: candidate.modelProvider || 'unknown',
           modelName: candidate.modelName || 'unknown',
           promptVersion: candidate.promptVersion || 'v1',
           generationVersion: candidate.generationVersion || 'v1',
           generatedAt: candidate.generatedAt || now,
-          createdAt: now,
-          updatedAt: now,
-          deletedAt: null,
-        };
-
-        candidates.push(candidateObj);
+          createdAt: now, updatedAt: now, deletedAt: null,
+        });
 
         // Handle ExpressionSense
         const senseKey = `${candidate.normalizedForm}::${candidate.type}::${candidate.meaningZh}`;
@@ -310,19 +281,9 @@ export async function registerArticleRoutes(app: FastifyInstance) {
                 mastery_status, srs_due_at, review_count, mistake_count, ease_factor,
                 interval_days, lapse_count, created_at, updated_at
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
-              [
-                expressionSenseId,
-                userId,
-                candidate.expression,
-                candidate.normalizedForm,
-                candidate.type,
-                candidate.meaningZh,
-                normalizedDifficulty,
-                'new',
-                now,
-                0, 0, 2.5, 0, 0,
-                now, now,
-              ]
+              [expressionSenseId, userId, candidate.expression, candidate.normalizedForm,
+               candidate.type, candidate.meaningZh, normalizedDifficulty,
+               'new', now, 0, 0, 2.5, 0, 0, now, now]
             );
           }
           expressionSenseMap.set(senseKey, expressionSenseId);
@@ -334,19 +295,9 @@ export async function registerArticleRoutes(app: FastifyInstance) {
             id, user_id, expression_sense_id, source_type, article_id, segment_id,
             sentence, sentence_translation, local_meaning, syntax_hint, created_at, updated_at
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-          [
-            randomUUID(),
-            userId,
-            expressionSenseId,
-            'article',
-            segment.articleId,
-            segmentId,
-            candidate.sentence || '',
-            candidate.sentenceTranslation || '',
-            candidate.localMeaning || '',
-            candidate.syntaxHint || null,
-            now, now,
-          ]
+          [randomUUID(), userId, expressionSenseId, 'article', segment.articleId, segmentId,
+           candidate.sentence || '', candidate.sentenceTranslation || '',
+           candidate.localMeaning || '', candidate.syntaxHint || null, now, now]
         );
       }
 
@@ -371,4 +322,5 @@ export async function registerArticleRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+
 }
