@@ -136,7 +136,7 @@ export function CardLibraryPage() {
       <header style={{ marginBottom: 'var(--space-4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h1>Library</h1>
+            <h1>Cards</h1>
             <p style={{ color: 'var(--gray-600)', marginTop: 'var(--space-1)' }}>
               {loading ? 'Loading...' : `${expressions.length} expression card${expressions.length !== 1 ? 's' : ''}`}
             </p>
@@ -159,6 +159,25 @@ export function CardLibraryPage() {
           )}
         </div>
       </header>
+
+      {/* Context card generator */}
+      <div style={{ marginBottom: 'var(--space-4)', maxWidth: '800px' }}>
+        <button
+          className="btn btn-primary"
+          onClick={() => setShowContextGenerator(!showContextGenerator)}
+          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: showContextGenerator ? 'var(--space-3)' : 0 }}
+        >
+          {showContextGenerator ? <ChevronUp size={16} /> : <Plus size={16} />}
+          {showContextGenerator ? 'Hide' : 'Add Card from Context'}
+        </button>
+        
+        {showContextGenerator && (
+          <div className="card" style={{ padding: 'var(--space-4)', marginTop: 'var(--space-3)' }}>
+            <ContextCardGenerator onAccept={handleAcceptContextCard} />
+          </div>
+        )}
+      </div>
+
 
       {/* Edit Mode Toolbar */}
       {editMode && (
