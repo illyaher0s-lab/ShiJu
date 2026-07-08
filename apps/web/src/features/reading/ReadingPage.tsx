@@ -130,6 +130,7 @@ export function ReadingPage() {
     console.log('Accepted draft:', draft);
     // TODO: Save to backend via POST /manual-selection/accept or similar
     alert(`Card "${draft.expression}" added to review!`);
+    setCandidates(prev => [...prev, draft]);
     setGeneratedDraft(null);
     clearSelection();
   }
