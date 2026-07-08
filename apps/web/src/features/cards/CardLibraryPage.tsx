@@ -161,18 +161,33 @@ export function CardLibraryPage() {
       </header>
 
       {/* Context card generator */}
-      <div style={{ marginBottom: 'var(--space-4)', maxWidth: '800px' }}>
+      <div style={{ marginBottom: 'var(--space-4)' }}>
         <button
-          className="btn btn-primary"
           onClick={() => setShowContextGenerator(!showContextGenerator)}
-          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: showContextGenerator ? 'var(--space-3)' : 0 }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)',
+            padding: '10px 16px',
+            fontSize: '14px',
+            fontWeight: 500,
+            color: 'var(--vercel-white)',
+            background: 'var(--vercel-black)',
+            border: 'none',
+            borderRadius: 'var(--radius-md)',
+            cursor: 'pointer',
+            transition: 'background 0.15s ease',
+            marginBottom: showContextGenerator ? 'var(--space-3)' : 0,
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--vercel-gray-900)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--vercel-black)'}
         >
           {showContextGenerator ? <ChevronUp size={16} /> : <Plus size={16} />}
           {showContextGenerator ? 'Hide' : 'Add Card from Context'}
         </button>
         
         {showContextGenerator && (
-          <div className="card" style={{ padding: 'var(--space-4)', marginTop: 'var(--space-3)' }}>
+          <div style={{ marginTop: 'var(--space-3)' }}>
             <ContextCardGenerator onAccept={handleAcceptContextCard} />
           </div>
         )}
