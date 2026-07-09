@@ -455,6 +455,15 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
     async generateContextEntryDraft(request) {
       console.log(`[LLM] Context generation: "${request.expression}" in ${request.contextLabel} context`);
       
+      // ponytail: context→type mapping rules before LLM fallback
+      const contextLower = request.contextLabel.toLowerCase();
+      const typeHint = 
+        contextLower.match(/game|gaming|video.?game|mmo|rpg/) ? 'slang or technical jargon (type: other)' :
+        contextLower.match(/program|code|coding|tech|software|dev/) ? 'technical term (type: other)' :
+        contextLower.match(/work|email|business|meeting/) ? 'collocation or phrasal_verb' :
+        contextLower.match(/conversation|chat|daily|spoken/) ? 'idiom, phrasal_verb, or collocation' :
+        'choose the most appropriate type';
+      
       const prompt = [
         `A learner encountered this expression: "${request.expression}"`,
         `Context: ${request.contextLabel}`,
@@ -462,7 +471,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
         request.sentence ? `Original sentence: "${request.sentence}"` : '',
         '',
         'Generate a learning card with:',
-        '- type: phrasal_verb, collocation, idiom, or other',
+        `- type: phrasal_verb, collocation, idiom, or other. Context hint: ${typeHint}`,
         '- meaning_zh: Chinese translation',
         '- local_meaning: English definition in this context',
         '- sentence: example sentence using this expression',

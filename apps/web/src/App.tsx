@@ -6,6 +6,7 @@ import { ReviewPage } from './features/review/ReviewPage';
 import { CardLibraryPage } from './features/cards/CardLibraryPage';
 import { ArticleListPage } from './features/articles/ArticleListPage';
 import { ArticleDetailPage } from './features/articles/ArticleDetailPage';
+import { ExpressionDetailPage } from './features/cards/ExpressionDetailPage';
 import './styles.css';
 
 export function App() {
@@ -21,6 +22,7 @@ export function App() {
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/reading/:articleId" element={<ReadingPage />} />
             <Route path="/articles/:id" element={<ArticleDetailPage />} />
+            <Route path="/expressions/:id" element={<ExpressionDetailPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, BookOpen, Target, Edit2, Trash2, X, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { listExpressions, deleteExpression, acceptContextCard, type ExpressionSense } from '../../api/articles';
 import { ContextCardGenerator } from './ContextCardGenerator';
 import type { CandidateExpression } from '@art/domain';
 
 export function CardLibraryPage() {
+  const navigate = useNavigate();
   const [expressions, setExpressions] = useState<ExpressionSense[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -322,12 +324,12 @@ export function CardLibraryPage() {
                 className="card"
                 style={{
                   padding: 'var(--space-3)',
-                  cursor: editMode ? 'pointer' : 'default',
+                  cursor: 'pointer',
                   transition: 'box-shadow 0.2s, border-color 0.2s',
                   border: isSelected ? '2px solid #3b82f6' : '1px solid rgba(0,0,0,0.08)',
                   background: isSelected ? '#eff6ff' : 'white',
                 }}
-                onClick={() => editMode && toggleSelection(expr.id)}
+                onClick={() => editMode ? toggleSelection(expr.id) : navigate(`/expressions/${expr.id}`)}
                 onMouseEnter={(e) => {
                   if (!editMode) {
                     e.currentTarget.style.boxShadow = '0px 0px 0px 1px rgba(0,0,0,0.12)';
