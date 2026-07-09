@@ -4,52 +4,41 @@ export function createMockProvider(): AiProvider {
   return {
     async generateSegment(segment) {
       const generatedAt = new Date().toISOString();
-      const text = segment.text.toLowerCase();
       
-      // ponytail: deterministic mock based on segment text length
-      const wordCount = segment.wordCount || 200;
-      const selectedCount = Math.min(6, Math.floor(wordCount / 40) + 2); // 2-6 selected
-      const backupCount = Math.min(8, Math.floor(wordCount / 30)); // 0-8 backup
+      // ponytail: extract real phrases from segment text for highlighting
+      const text = segment.text;
+      const words = text.match(/\b[a-z]+(?:\s+[a-z]+){0,2}\b/gi) || [];
+      const uniquePhrases = [...new Set(words.map(w => w.toLowerCase()))].slice(0, 20);
       
-      const mockExpressions = [
-        { expr: "roll out", type: "phrasal_verb", zh: "推出、发布", en: "make available", score: 92 },
-        { expr: "turn out", type: "phrasal_verb", zh: "结果是", en: "result in", score: 88 },
-        { expr: "carry out", type: "phrasal_verb", zh: "执行", en: "perform", score: 85 },
-        { expr: "point out", type: "phrasal_verb", zh: "指出", en: "mention", score: 82 },
-        { expr: "set up", type: "phrasal_verb", zh: "建立", en: "establish", score: 80 },
-        { expr: "come up with", type: "phrasal_verb", zh: "想出", en: "devise", score: 78 },
-        { expr: "on the other hand", type: "idiom", zh: "另一方面", en: "conversely", score: 75 },
-        { expr: "in terms of", type: "collocation", zh: "在…方面", en: "regarding", score: 72 },
-        { expr: "as a result", type: "collocation", zh: "结果", en: "consequently", score: 70 },
-        { expr: "for instance", type: "collocation", zh: "例如", en: "for example", score: 68 },
-        { expr: "take into account", type: "phrasal_verb", zh: "考虑", en: "consider", score: 65 },
-        { expr: "in addition", type: "collocation", zh: "此外", en: "furthermore", score: 62 },
-        { expr: "deal with", type: "phrasal_verb", zh: "处理", en: "handle", score: 60 },
-        { expr: "focus on", type: "phrasal_verb", zh: "专注于", en: "concentrate on", score: 58 },
-      ];
+      if (uniquePhrases.length === 0) {
+        return { candidates: [] }; // Empty segment or non-English
+      }
+      
+      const selectedCount = Math.min(6, Math.floor(uniquePhrases.length / 3));
+      const backupCount = Math.min(8, uniquePhrases.length - selectedCount);
       
       const candidates = [];
       
-      // Selected candidates
-      for (let i = 0; i < selectedCount && i < mockExpressions.length; i++) {
-        const mock = mockExpressions[i];
+      // Selected candidates (real phrases from text)
+      for (let i = 0; i < selectedCount; i++) {
+        const expr = uniquePhrases[i];
         candidates.push({
           id: `candidate-${segment.id}-${i}`,
           userId: segment.userId,
           articleId: segment.articleId,
           segmentId: segment.id,
-          expression: mock.expr,
-          normalizedForm: mock.expr,
-          type: mock.type,
-          meaningZh: mock.zh,
-          localMeaning: mock.en,
-          sentence: firstSentence(segment.text),
-          sentenceTranslation: `示例句子包含"${mock.expr}"。`,
-          syntaxHint: i === 0 ? "Main action" : null,
+          expression: expr,
+          normalizedForm: expr,
+          type: "phrasal_verb",
+          meaningZh: "模拟释义",
+          localMeaning: "mock meaning",
+          sentence: extractSentenceContaining(text, expr),
+          sentenceTranslation: "模拟翻译。",
+          syntaxHint: i === 0 ? "Main phrase" : null,
           difficulty: "B2",
-          valueScore: mock.score,
+          valueScore: 90 - i * 5,
           candidateStatus: "selected",
-          statusReason: "High-value expression",
+          statusReason: "Mock highlight",
           occurrenceCount: 1,
           modelProvider: "mock",
           modelName: "mock-v1",
@@ -60,25 +49,25 @@ export function createMockProvider(): AiProvider {
       }
       
       // Backup candidates
-      for (let i = selectedCount; i < selectedCount + backupCount && i < mockExpressions.length; i++) {
-        const mock = mockExpressions[i];
+      for (let i = selectedCount; i < selectedCount + backupCount; i++) {
+        const expr = uniquePhrases[i];
         candidates.push({
           id: `candidate-${segment.id}-${i}`,
           userId: segment.userId,
           articleId: segment.articleId,
           segmentId: segment.id,
-          expression: mock.expr,
-          normalizedForm: mock.expr,
-          type: mock.type,
-          meaningZh: mock.zh,
-          localMeaning: mock.en,
-          sentence: firstSentence(segment.text),
-          sentenceTranslation: `示例句子包含"${mock.expr}"。`,
+          expression: expr,
+          normalizedForm: expr,
+          type: "collocation",
+          meaningZh: "备选释义",
+          localMeaning: "backup meaning",
+          sentence: extractSentenceContaining(text, expr),
+          sentenceTranslation: "备选翻译。",
           syntaxHint: null,
           difficulty: "B1",
-          valueScore: mock.score,
+          valueScore: 70 - (i - selectedCount) * 3,
           candidateStatus: "backup_candidate",
-          statusReason: "Useful but not highlighted",
+          statusReason: "Backup",
           occurrenceCount: 1,
           modelProvider: "mock",
           modelName: "mock-v1",
@@ -233,4 +222,10 @@ export function createMockProvider(): AiProvider {
 
 function firstSentence(text: string): string {
   return text.split(".")[0]?.trim() ? `${text.split(".")[0]!.trim()}.` : text;
+}
+
+function extractSentenceContaining(text: string, phrase: string): string {
+  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(Boolean);
+  const match = sentences.find(s => s.toLowerCase().includes(phrase.toLowerCase()));
+  return match ? `${match}.` : firstSentence(text);
 }
