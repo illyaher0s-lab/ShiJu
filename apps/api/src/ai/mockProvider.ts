@@ -3,35 +3,92 @@ import type { AiProvider } from "./provider";
 export function createMockProvider(): AiProvider {
   return {
     async generateSegment(segment) {
-      const generatedAt = new Date("2026-06-13T00:00:00.000Z").toISOString();
-      return {
-        candidates: [
-          {
-            id: `candidate-${segment.id}-roll-out`,
-            userId: segment.userId,
-            articleId: segment.articleId,
-            segmentId: segment.id,
-            expression: "roll out",
-            normalizedForm: "roll out",
-            type: "phrasal_verb",
-            meaningZh: "推出、发布",
-            localMeaning: "make a new service available",
-            sentence: firstSentence(segment.text),
-            sentenceTranslation: "该句说明一项服务被推出。",
-            syntaxHint: "Main action: teams roll out a service.",
-            difficulty: "B2",
-            valueScore: 92,
-            candidateStatus: "selected",
-            statusReason: "High-value phrasal verb in product and policy writing.",
-            occurrenceCount: 1,
-            modelProvider: "mock",
-            modelName: "mock-v1",
-            promptVersion: "prompt-v1",
-            generationVersion: "generation-v1",
-            generatedAt,
-          },
-        ],
-      };
+      const generatedAt = new Date().toISOString();
+      const text = segment.text.toLowerCase();
+      
+      // ponytail: deterministic mock based on segment text length
+      const wordCount = segment.wordCount || 200;
+      const selectedCount = Math.min(6, Math.floor(wordCount / 40) + 2); // 2-6 selected
+      const backupCount = Math.min(8, Math.floor(wordCount / 30)); // 0-8 backup
+      
+      const mockExpressions = [
+        { expr: "roll out", type: "phrasal_verb", zh: "推出、发布", en: "make available", score: 92 },
+        { expr: "turn out", type: "phrasal_verb", zh: "结果是", en: "result in", score: 88 },
+        { expr: "carry out", type: "phrasal_verb", zh: "执行", en: "perform", score: 85 },
+        { expr: "point out", type: "phrasal_verb", zh: "指出", en: "mention", score: 82 },
+        { expr: "set up", type: "phrasal_verb", zh: "建立", en: "establish", score: 80 },
+        { expr: "come up with", type: "phrasal_verb", zh: "想出", en: "devise", score: 78 },
+        { expr: "on the other hand", type: "idiom", zh: "另一方面", en: "conversely", score: 75 },
+        { expr: "in terms of", type: "collocation", zh: "在…方面", en: "regarding", score: 72 },
+        { expr: "as a result", type: "collocation", zh: "结果", en: "consequently", score: 70 },
+        { expr: "for instance", type: "collocation", zh: "例如", en: "for example", score: 68 },
+        { expr: "take into account", type: "phrasal_verb", zh: "考虑", en: "consider", score: 65 },
+        { expr: "in addition", type: "collocation", zh: "此外", en: "furthermore", score: 62 },
+        { expr: "deal with", type: "phrasal_verb", zh: "处理", en: "handle", score: 60 },
+        { expr: "focus on", type: "phrasal_verb", zh: "专注于", en: "concentrate on", score: 58 },
+      ];
+      
+      const candidates = [];
+      
+      // Selected candidates
+      for (let i = 0; i < selectedCount && i < mockExpressions.length; i++) {
+        const mock = mockExpressions[i];
+        candidates.push({
+          id: `candidate-${segment.id}-${i}`,
+          userId: segment.userId,
+          articleId: segment.articleId,
+          segmentId: segment.id,
+          expression: mock.expr,
+          normalizedForm: mock.expr,
+          type: mock.type,
+          meaningZh: mock.zh,
+          localMeaning: mock.en,
+          sentence: firstSentence(segment.text),
+          sentenceTranslation: `示例句子包含"${mock.expr}"。`,
+          syntaxHint: i === 0 ? "Main action" : null,
+          difficulty: "B2",
+          valueScore: mock.score,
+          candidateStatus: "selected",
+          statusReason: "High-value expression",
+          occurrenceCount: 1,
+          modelProvider: "mock",
+          modelName: "mock-v1",
+          promptVersion: "prompt-v1",
+          generationVersion: "generation-v1",
+          generatedAt,
+        });
+      }
+      
+      // Backup candidates
+      for (let i = selectedCount; i < selectedCount + backupCount && i < mockExpressions.length; i++) {
+        const mock = mockExpressions[i];
+        candidates.push({
+          id: `candidate-${segment.id}-${i}`,
+          userId: segment.userId,
+          articleId: segment.articleId,
+          segmentId: segment.id,
+          expression: mock.expr,
+          normalizedForm: mock.expr,
+          type: mock.type,
+          meaningZh: mock.zh,
+          localMeaning: mock.en,
+          sentence: firstSentence(segment.text),
+          sentenceTranslation: `示例句子包含"${mock.expr}"。`,
+          syntaxHint: null,
+          difficulty: "B1",
+          valueScore: mock.score,
+          candidateStatus: "backup_candidate",
+          statusReason: "Useful but not highlighted",
+          occurrenceCount: 1,
+          modelProvider: "mock",
+          modelName: "mock-v1",
+          promptVersion: "prompt-v1",
+          generationVersion: "generation-v1",
+          generatedAt,
+        });
+      }
+      
+      return { candidates };
     },
 
     async generateManualSelectionDraft(request) {
