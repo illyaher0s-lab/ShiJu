@@ -179,24 +179,43 @@ export function ReadingPage() {
   const segmentHighlights = highlights[currentSegment.id] || [];
 
   function renderHighlightedText() {
-    let text = currentSegment.text;
+    const text = currentSegment.text;
+    const lowerText = text.toLowerCase();
+    
+    // ponytail: collect all matches, sort, dedupe overlaps
+    const matches: Array<{start: number; end: number; phrase: string; idx: number}> = [];
+    segmentHighlights.forEach((phrase, idx) => {
+      const pos = lowerText.indexOf(phrase.toLowerCase());
+      if (pos !== -1) {
+        matches.push({ start: pos, end: pos + phrase.length, phrase, idx });
+      }
+    });
+    
+    matches.sort((a, b) => a.start - b.start);
+    
+    // Remove overlaps: keep first, skip if start < prev.end
+    const deduped: typeof matches = [];
+    let lastEnd = 0;
+    for (const m of matches) {
+      if (m.start >= lastEnd) {
+        deduped.push(m);
+        lastEnd = m.end;
+      }
+    }
+    
     const parts: JSX.Element[] = [];
     let lastIndex = 0;
-
-    // ponytail: simple indexOf, no complex matching
-    segmentHighlights.forEach((phrase, idx) => {
-      const pos = text.toLowerCase().indexOf(phrase.toLowerCase(), lastIndex);
-      if (pos === -1) return;
-
-      if (pos > lastIndex) {
-        parts.push(<span key={`text-${lastIndex}`}>{text.slice(lastIndex, pos)}</span>);
+    
+    deduped.forEach((m) => {
+      if (m.start > lastIndex) {
+        parts.push(<span key={`text-${lastIndex}`}>{text.slice(lastIndex, m.start)}</span>);
       }
-
-      const isGenerated = !!generatedCards[phrase];
+      
+      const isGenerated = !!generatedCards[m.phrase];
       parts.push(
         <mark
-          key={`mark-${idx}`}
-          onClick={() => isGenerated ? setGeneratedDraft(generatedCards[phrase]!) : setClickedPhrase(phrase)}
+          key={`mark-${m.idx}`}
+          onClick={() => isGenerated ? setGeneratedDraft(generatedCards[m.phrase]!) : setClickedPhrase(m.phrase)}
           style={{
             cursor: 'pointer',
             background: isGenerated ? '#d1fae5' : '#fef3c7',
@@ -204,17 +223,17 @@ export function ReadingPage() {
             borderRadius: '3px',
           }}
         >
-          {text.slice(pos, pos + phrase.length)}
+          {text.slice(m.start, m.end)}
         </mark>
       );
-
-      lastIndex = pos + phrase.length;
+      
+      lastIndex = m.end;
     });
-
+    
     if (lastIndex < text.length) {
       parts.push(<span key={`text-${lastIndex}`}>{text.slice(lastIndex)}</span>);
     }
-
+    
     return parts;
   }
 
