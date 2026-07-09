@@ -239,7 +239,8 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
         temperature: 0.3,
       });
       
-      const content = response.choices[0]?.message?.content || '';
+      const content = response.content || response.choices?.[0]?.message?.content || "";
+      console.log("[HIGHLIGHTS LLM] Response:", JSON.stringify(response).slice(0, 300));
       return content.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 15);
     },
 
