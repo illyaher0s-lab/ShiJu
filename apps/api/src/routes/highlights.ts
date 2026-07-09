@@ -2,8 +2,11 @@ import type { FastifyInstance } from 'fastify';
 import { createGenerationProvider } from '../services/generationService';
 
 export async function registerHighlightRoutes(app: FastifyInstance) {
+  console.log('[HIGHLIGHTS] Registering highlight routes...');
+  
   // Extract highlights from segment (phase 1)
   app.post('/segments/:segmentId/extract-highlights', async (request, reply) => {
+    console.log('[HIGHLIGHTS] Route called:', request.params);
     const { segmentId } = request.params as { segmentId: string };
     const userId = 'user-1'; // TODO: from auth
     
@@ -22,7 +25,10 @@ export async function registerHighlightRoutes(app: FastifyInstance) {
     
     // ponytail: mock returns regex-extracted phrases, real LLM returns semantic list
     const phrases = await provider.extractHighlights(segment);
+    console.log('[HIGHLIGHTS] Extracted:', phrases.length, 'phrases');
     
     return reply.send({ phrases });
   });
+  
+  console.log('[HIGHLIGHTS] Registration complete');
 }
