@@ -7,7 +7,8 @@ export async function registerHighlightRoutes(app: FastifyInstance) {
     const { segmentId } = request.params as { segmentId: string };
     const userId = 'user-1'; // TODO: from auth
     
-    const segmentRes = await app.pg.query(
+    const { query } = await import('../db/client');
+    const segmentRes = await query(
       `SELECT * FROM segments WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
       [segmentId, userId]
     );
