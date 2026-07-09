@@ -2,6 +2,13 @@ import type { AiProvider } from "./provider";
 
 export function createMockProvider(): AiProvider {
   return {
+    async extractHighlights(segment) {
+      // ponytail: extract 1-3 word phrases, return top 20
+      const text = segment.text;
+      const words = text.match(/\b[a-z]+(?:\s+[a-z]+){0,2}\b/gi) || [];
+      return [...new Set(words.map(w => w.toLowerCase()))].slice(0, 20);
+    },
+    
     async generateSegment(segment) {
       const generatedAt = new Date().toISOString();
       

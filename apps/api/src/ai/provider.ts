@@ -8,7 +8,8 @@ export interface AiGenerationResult {
 }
 
 export interface AiProvider {
-  generateSegment(segment: Segment): Promise<AiGenerationResult>;
-  generateManualSelectionDraft(request: ManualSelectionGenerationRequest): Promise<ManualSelectionGenerationDraft>;
+  generateSegment(segment: Segment): Promise<{ candidates: CandidateExpression[] }>;
+  generateManualSelectionDraft(request: ManualSelectionDraftRequest): Promise<ManualSelectionDraft>;
   generateContextEntryDraft(request: ContextEntryGenerationRequest): Promise<ContextEntryGenerationDraft>;
+  extractHighlights(segment: Segment): Promise<string[]>;
 }

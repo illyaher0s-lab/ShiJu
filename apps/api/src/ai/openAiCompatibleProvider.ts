@@ -230,6 +230,19 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
   };
 
   return {
+    async extractHighlights(segment) {
+      // ponytail: real LLM extracts semantic phrases
+      const prompt = `Extract 5-10 valuable English expressions from this text for a learner. Return only the phrases, one per line:\n\n${segment.text}`;
+      
+      const response = await callLLM(llmConfig, {
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+      });
+      
+      const content = response.choices[0]?.message?.content || '';
+      return content.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 15);
+    },
+
     async generateSegment(segment) {
       const inputLength = segment.text.length;
       console.log(`[LLM] Input text length: ${inputLength} chars`);
