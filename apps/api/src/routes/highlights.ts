@@ -21,11 +21,22 @@ export async function registerHighlightRoutes(app: FastifyInstance) {
     }
     
     const segment = segmentRes.rows[0];
-    const provider = createGenerationProvider();
     
-    // ponytail: mock returns regex-extracted phrases, real LLM returns semantic list
+    // ponytail: cache to avoid re-calling LLM on every page load
+    if (segment.highlights) {
+      console.log('[HIGHLIGHTS] Returning cached:', segment.highlights.length, 'phrases');
+      return reply.send({ phrases: segment.highlights });
+    }
+    
+    const provider = createGenerationProvider();
     const phrases = await provider.extractHighlights(segment);
     console.log('[HIGHLIGHTS] Extracted:', phrases.length, 'phrases');
+    
+    // Store for next time
+    await query(
+      `UPDATE segments SET highlights = $1, updated_at = now() WHERE id = $2`,
+      [JSON.stringify(phrases), segmentId]
+    );
     
     return reply.send({ phrases });
   });
