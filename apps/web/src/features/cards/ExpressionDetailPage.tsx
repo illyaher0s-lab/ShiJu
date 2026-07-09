@@ -62,12 +62,19 @@ export function ExpressionDetailPage() {
         </h1>
 
         <div style={{ marginBottom: 'var(--space-3)' }}>
-          <p style={{ fontSize: '16px', color: 'var(--vercel-gray-700)', marginBottom: 'var(--space-1)' }}>
-            {expression.localMeaning}
-          </p>
+          {occurrences[0]?.localMeaning && (
+            <p style={{ fontSize: '16px', color: 'var(--vercel-gray-700)', marginBottom: 'var(--space-1)' }}>
+              {occurrences[0].localMeaning}
+            </p>
+          )}
           <p style={{ fontSize: '16px', color: 'var(--vercel-gray-600)' }}>
             {expression.meaningZh}
           </p>
+          {occurrences[0]?.syntaxHint && (
+            <p style={{ fontSize: '14px', color: 'var(--vercel-gray-500)', marginTop: 'var(--space-1)', fontStyle: 'italic' }}>
+              {occurrences[0].syntaxHint}
+            </p>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', fontSize: '14px' }}>
@@ -94,6 +101,22 @@ export function ExpressionDetailPage() {
             color: 'var(--vercel-gray-700)',
           }}>
             {expression.masteryStatus}
+          </span>
+          <span style={{
+            padding: '4px 8px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--vercel-gray-100)',
+            color: 'var(--vercel-gray-700)',
+          }}>
+            {expression.reviewCount} reviews
+          </span>
+          <span style={{
+            padding: '4px 8px',
+            borderRadius: 'var(--radius-sm)',
+            background: expression.mistakeCount > 0 ? '#fee' : 'var(--vercel-gray-100)',
+            color: expression.mistakeCount > 0 ? '#c00' : 'var(--vercel-gray-700)',
+          }}>
+            {expression.mistakeCount} mistakes
           </span>
         </div>
       </div>
