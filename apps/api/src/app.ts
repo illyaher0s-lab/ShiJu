@@ -8,6 +8,7 @@ import { registerReviewRoutes } from "./routes/review";
 import { registerSyncRoutes } from "./routes/sync";
 import { registerExpressionRoutes } from "./routes/expressions";
 import { registerHighlightRoutes } from "./routes/highlights";
+import { registerSettingsRoutes } from "./routes/settings";
 import { healthRoutes } from "./routes/health";
 
 export function buildApp() {
@@ -22,5 +23,6 @@ export function buildApp() {
   app.register(registerContextGenerationRoutes);
   app.register(registerCardAcceptRoutes);
   app.register(registerHighlightRoutes);
+  app.register(registerSettingsRoutes);
   return app;
 }

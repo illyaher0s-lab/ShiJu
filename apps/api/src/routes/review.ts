@@ -159,6 +159,48 @@ export async function registerReviewRoutes(app: FastifyInstance) {
     });
   });
   
+  // Get today's review progress
+  app.get('/review/daily-stats', async (request, reply) => {
+    const userId = 'user-1'; // TODO: from auth
+    
+    const todayResult = await query(
+      `SELECT COUNT(DISTINCT expression_sense_id) as count
+       FROM review_logs
+       WHERE user_id = $1 AND DATE(reviewed_at AT TIME ZONE 'UTC') = CURRENT_DATE`,
+      [userId]
+    );
+    
+    const goalResult = await query(
+      `SELECT daily_review_goal FROM user_settings WHERE user_id = $1`,
+      [userId]
+    );
+    
+    const reviewedToday = parseInt(todayResult.rows[0]?.count || '0', 10);
+    const goal = goalResult.rows[0]?.daily_review_goal || 20;
+    
+    return reply.send({ reviewedToday, goal });
+  });
+  
+  // Get review calendar (last N days)
+  app.get('/review/calendar', async (request, reply) => {
+    const userId = 'user-1'; // TODO: from auth
+    const days = parseInt((request.query as any).days || '30', 10);
+    
+    const result = await query(
+      `SELECT 
+        DATE(reviewed_at AT TIME ZONE 'UTC') as date,
+        COUNT(DISTINCT expression_sense_id) as count
+       FROM review_logs
+       WHERE user_id = $1 
+         AND reviewed_at >= CURRENT_DATE - INTERVAL '${days} days'
+       GROUP BY DATE(reviewed_at AT TIME ZONE 'UTC')
+       ORDER BY date DESC`,
+      [userId]
+    );
+    
+    return reply.send({ calendar: result.rows });
+  });
+  
   // Get review statistics
   app.get('/review/stats', async (request, reply) => {
     const userId = 'user-1'; // TODO: from auth
