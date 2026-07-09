@@ -7,6 +7,7 @@ import { registerManualSelectionRoutes } from "./routes/manualSelection";
 import { registerReviewRoutes } from "./routes/review";
 import { registerSyncRoutes } from "./routes/sync";
 import { registerExpressionRoutes } from "./routes/expressions";
+import { registerHighlightRoutes } from "./routes/highlights";
 import { healthRoutes } from "./routes/health";
 
 export function buildApp() {
@@ -20,5 +21,6 @@ export function buildApp() {
   app.register(registerManualSelectionRoutes);
   app.register(registerContextGenerationRoutes);
   app.register(registerCardAcceptRoutes);
+  app.register(registerHighlightRoutes);
   return app;
 }
