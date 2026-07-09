@@ -22,6 +22,7 @@ export function createMockProvider(): AiProvider {
       // Selected candidates (real phrases from text)
       for (let i = 0; i < selectedCount; i++) {
         const expr = uniquePhrases[i];
+        const meaning = mockMeaning(expr);
         candidates.push({
           id: `candidate-${segment.id}-${i}`,
           userId: segment.userId,
@@ -29,12 +30,12 @@ export function createMockProvider(): AiProvider {
           segmentId: segment.id,
           expression: expr,
           normalizedForm: expr,
-          type: "phrasal_verb",
-          meaningZh: "模拟释义",
-          localMeaning: "mock meaning",
+          type: meaning.type,
+          meaningZh: meaning.zh,
+          localMeaning: meaning.en,
           sentence: extractSentenceContaining(text, expr),
-          sentenceTranslation: "模拟翻译。",
-          syntaxHint: i === 0 ? "Main phrase" : null,
+          sentenceTranslation: "示例翻译。",
+          syntaxHint: null,
           difficulty: "B2",
           valueScore: 90 - i * 5,
           candidateStatus: "selected",
@@ -51,6 +52,7 @@ export function createMockProvider(): AiProvider {
       // Backup candidates
       for (let i = selectedCount; i < selectedCount + backupCount; i++) {
         const expr = uniquePhrases[i];
+        const meaning = mockMeaning(expr);
         candidates.push({
           id: `candidate-${segment.id}-${i}`,
           userId: segment.userId,
@@ -58,11 +60,11 @@ export function createMockProvider(): AiProvider {
           segmentId: segment.id,
           expression: expr,
           normalizedForm: expr,
-          type: "collocation",
-          meaningZh: "备选释义",
-          localMeaning: "backup meaning",
+          type: meaning.type,
+          meaningZh: meaning.zh,
+          localMeaning: meaning.en,
           sentence: extractSentenceContaining(text, expr),
-          sentenceTranslation: "备选翻译。",
+          sentenceTranslation: "示例翻译。",
           syntaxHint: null,
           difficulty: "B1",
           valueScore: 70 - (i - selectedCount) * 3,
@@ -218,6 +220,15 @@ export function createMockProvider(): AiProvider {
       };
     },
   };
+}
+
+function mockMeaning(phrase: string): { zh: string; en: string; type: string } {
+  // ponytail: naive heuristic, real LLM replaces this
+  const words = phrase.trim().split(/\s+/);
+  if (words.length >= 2) {
+    return { zh: `${phrase}的含义`, en: `meaning of "${phrase}"`, type: "phrasal_verb" };
+  }
+  return { zh: `${phrase}`, en: `${phrase}`, type: "other" };
 }
 
 function firstSentence(text: string): string {

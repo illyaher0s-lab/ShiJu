@@ -18,7 +18,6 @@ export function ReadingPage() {
   const [error, setError] = useState<string | null>(null);
   const [generatingCard, setGeneratingCard] = useState(false);
   const [generatingSegment, setGeneratingSegment] = useState(false);
-  const [showMore, setShowMore] = useState(false);
   
   // Manual selection state
   const [selectedText, setSelectedText] = useState('');
@@ -192,7 +191,7 @@ export function ReadingPage() {
 
     // Only show 'selected' candidates, top 6 by value_score
     const selectedCandidates = candidatesForSegment
-      .filter(c => c.candidateStatus === 'selected')
+      .filter(c => c.candidateStatus === 'selected' || c.candidateStatus === 'backup_candidate')
       .sort((a, b) => (b.valueScore || 0) - (a.valueScore || 0))
       .slice(0, 6);
 
@@ -337,11 +336,6 @@ export function ReadingPage() {
   }
 
   const progress = Math.round(((currentIndex + 1) / segments.length) * 100);
-  
-  const candidatesForSegment = candidates.filter(c => c.segmentId === currentSegment.id);
-  const backupCandidates = candidatesForSegment.filter(c => 
-    c.candidateStatus === 'backup_candidate' || c.candidateStatus === 'ignored_over_limit'
-  );
 
   return (
     <>
@@ -456,58 +450,6 @@ export function ReadingPage() {
             selectedText={selectedText}
             onGenerate={handleGenerateCard}
           />
-        </div>
-      )}
-
-      {/* More expressions */}
-      {backupCandidates.length > 0 && (
-        <div className="card" style={{ padding: 'var(--space-4)', marginBottom: 'var(--space-3)', maxWidth: '800px' }}>
-          <button
-            onClick={() => setShowMore(!showMore)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-              padding: 0,
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: 'var(--vercel-gray-700)',
-            }}
-          >
-            <span>More expressions ({backupCandidates.length})</span>
-            <span>{showMore ? '▲' : '▼'}</span>
-          </button>
-          
-          {showMore && (
-            <div style={{ marginTop: 'var(--space-3)', display: 'grid', gap: 'var(--space-2)' }}>
-              {backupCandidates.map(candidate => (
-                <div
-                  key={candidate.id}
-                  onClick={() => setGeneratedDraft(candidate)}
-                  style={{
-                    padding: 'var(--space-2)',
-                    background: 'var(--vercel-gray-50)',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--vercel-gray-100)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'var(--vercel-gray-50)'}
-                >
-                  <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>
-                    {candidate.expression}
-                  </div>
-                  <div style={{ fontSize: '13px', color: 'var(--vercel-gray-600)' }}>
-                    {candidate.localMeaning}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
