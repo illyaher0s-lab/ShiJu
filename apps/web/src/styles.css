@@ -313,9 +313,8 @@ a:hover {
 }
 
 .sidebar-nav-link.active {
-  background: var(--vercel-gray-100);
-  color: var(--vercel-black);
-  box-shadow: var(--shadow-border);
+  background: var(--vercel-black);
+  color: var(--vercel-white);
 }
 
 /* Logo */

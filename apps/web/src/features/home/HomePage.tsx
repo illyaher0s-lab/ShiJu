@@ -72,6 +72,20 @@ export function HomePage() {
 
   return (
     <>
+      {stats.totalCount === 0 ? (
+        <div style={{ maxWidth: '600px', margin: '80px auto', textAlign: 'center' }}>
+          <BookOpen size={64} color="var(--vercel-gray-400)" style={{ marginBottom: 'var(--space-3)' }} />
+          <h1 style={{ fontSize: '32px', marginBottom: 'var(--space-2)' }}>Welcome to ShiJu</h1>
+          <p style={{ color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-4)', fontSize: '16px' }}>
+            Import an English article to start. AI will highlight expressions, you pick what to learn.
+          </p>
+          <a href="/shiju/import" className="btn btn-primary" style={{ textDecoration: 'none', fontSize: '16px', padding: '12px 24px' }}>
+            <BookOpen size={20} />
+            Import Your First Article
+          </a>
+        </div>
+      ) : (
+      <>
       <header style={{ marginBottom: 'var(--space-4)' }}>
         <h1>Dashboard</h1>
         <p style={{ color: 'var(--vercel-gray-600)', marginTop: 'var(--space-1)' }}>
@@ -80,7 +94,7 @@ export function HomePage() {
       </header>
 
       {/* Today's Progress */}
-      <div className="card" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+      <div className="card" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '600' }}>Today's Progress</h3>
           {!editingGoal ? (
@@ -107,7 +121,7 @@ export function HomePage() {
           )}
         </div>
         
-        <p style={{ fontSize: '24px', fontWeight: '600', marginBottom: 'var(--space-1)' }}>
+        <p style={{ fontSize: '24px', fontWeight: '600', marginBottom: 'var(--space-2)' }}>
           {loading ? '—' : `${dailyStats.reviewedToday} / ${dailyStats.goal}`}
         </p>
         
@@ -117,7 +131,8 @@ export function HomePage() {
       </div>
 
       {/* Calendar */}
-      <div className="card" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+      {dailyStats.reviewedToday > 0 && (
+      <div className="card" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
         <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 'var(--space-2)' }}>Review Calendar (Last 30 Days)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 'var(--space-1)' }}>
           {calendar.slice(0, 35).reverse().map((day, idx) => {
@@ -141,14 +156,15 @@ export function HomePage() {
           Lighter = fewer reviews · Darker = more reviews
         </p>
       </div>
+      )}
 
       {/* Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
         <div className="card" style={{ padding: 'var(--space-3)' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-1)' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-2)' }}>
             Due Reviews
           </h3>
-          <p style={{ fontSize: '32px', fontWeight: '600', color: 'var(--vercel-black)' }}>
+          <p style={{ fontSize: '40px', fontWeight: '600', lineHeight: '1', marginBottom: 'var(--space-1)', color: 'var(--vercel-black)' }}>
             {loading ? '—' : stats.dueCount}
           </p>
           <p style={{ fontSize: '14px', color: 'var(--vercel-gray-500)' }}>
@@ -157,10 +173,10 @@ export function HomePage() {
         </div>
 
         <div className="card" style={{ padding: 'var(--space-3)' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-1)' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-2)' }}>
             Total Cards
           </h3>
-          <p style={{ fontSize: '32px', fontWeight: '600', color: 'var(--vercel-black)' }}>
+          <p style={{ fontSize: '40px', fontWeight: '600', lineHeight: '1', marginBottom: 'var(--space-1)', color: 'var(--vercel-black)' }}>
             {loading ? '—' : stats.totalCount}
           </p>
           <p style={{ fontSize: '14px', color: 'var(--vercel-gray-500)' }}>
@@ -169,10 +185,10 @@ export function HomePage() {
         </div>
 
         <div className="card" style={{ padding: 'var(--space-3)' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-1)' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-2)' }}>
             Mastered
           </h3>
-          <p style={{ fontSize: '32px', fontWeight: '600', color: 'var(--vercel-black)' }}>
+          <p style={{ fontSize: '40px', fontWeight: '600', lineHeight: '1', marginBottom: 'var(--space-1)', color: 'var(--vercel-black)' }}>
             {loading ? '—' : stats.masteredCount}
           </p>
           <p style={{ fontSize: '14px', color: 'var(--vercel-gray-500)' }}>
@@ -181,8 +197,8 @@ export function HomePage() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
-        <h2 style={{ fontSize: '18px', marginBottom: 'var(--space-2)' }}>Quick Actions</h2>
+      <div className="card" style={{ padding: 'var(--space-3)' }}>
+        <h2 style={{ fontSize: '18px', marginBottom: 'var(--space-3)' }}>Quick Actions</h2>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
           <a href="/articles" className="btn btn-primary" style={{ textDecoration: 'none' }}>
             <BookOpen size={16} />
@@ -198,6 +214,8 @@ export function HomePage() {
           </a>
         </div>
       </div>
+      </>
+      )}
     </>
   );
 }
