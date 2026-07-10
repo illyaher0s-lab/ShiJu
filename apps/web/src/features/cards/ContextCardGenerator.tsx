@@ -14,11 +14,13 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
   const [sentence, setSentence] = useState("");
   const [draft, setDraft] = useState<CandidateExpression | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function generate() {
     if (!expression.trim() || !contextLabel.trim()) return;
     
     setGenerating(true);
+    setError(null);
     try {
       const result = await generateContextCard({
         expression,
@@ -31,7 +33,8 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
       setDraft(result.candidate);
     } catch (err) {
       console.error('Failed to generate context card:', err);
-      alert(err instanceof Error ? err.message : 'Failed to generate card');
+      const message = err instanceof Error ? err.message : '生成失败，请稍后重试';
+      setError(message);
     } finally {
       setGenerating(false);
     }
@@ -238,6 +241,20 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
               onBlur={(e) => e.target.style.borderColor = 'var(--vercel-gray-300)'}
             />
           </div>
+
+          {/* Error message */}
+          {error && (
+            <div style={{
+              padding: 'var(--space-3)',
+              background: '#fef2f2',
+              border: '1px solid #fca5a5',
+              borderRadius: 'var(--radius-md)',
+              fontSize: '14px',
+              color: '#dc2626',
+            }}>
+              {error}
+            </div>
+          )}
 
           {/* Generate button */}
           <button
