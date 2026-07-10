@@ -62,7 +62,7 @@ export function ReviewPage() {
         <header style={{ marginBottom: 'var(--space-4)' }}>
           <h1>Review</h1>
         </header>
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '700px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <p style={{ color: 'var(--vercel-gray-600)' }}>Loading reviews...</p>
         </div>
       </>
@@ -78,7 +78,7 @@ export function ReviewPage() {
             No cards due for review
           </p>
         </header>
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '700px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <CheckCircle size={48} color="var(--vercel-gray-400)" style={{ marginBottom: 'var(--space-3)' }} />
           <h3 style={{ marginBottom: 'var(--space-2)' }}>All caught up!</h3>
           <p style={{ color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-3)' }}>
@@ -101,7 +101,7 @@ export function ReviewPage() {
         <header style={{ marginBottom: 'var(--space-4)' }}>
           <h1>Review</h1>
         </header>
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '700px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <p style={{ color: 'var(--vercel-gray-600)' }}>No card available</p>
         </div>
       </>
@@ -128,7 +128,7 @@ export function ReviewPage() {
             display: 'flex',
             alignItems: 'center',
             gap: 'var(--space-2)',
-            maxWidth: '700px',
+            
           }}
         >
           <AlertCircle size={20} color="#dc2626" />
@@ -136,7 +136,7 @@ export function ReviewPage() {
         </div>
       )}
 
-      <div className="card" style={{ padding: 'var(--space-5)', maxWidth: '700px' }}>
+      <div className="card" style={{ padding: 'var(--space-5)' }}>
         {/* Question side */}
         <div style={{ marginBottom: 'var(--space-4)', textAlign: 'center' }}>
           <div

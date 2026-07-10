@@ -80,7 +80,7 @@ export function HomePage() {
       </header>
 
       {/* Today's Progress */}
-      <div className="card" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-3)', maxWidth: '1000px' }}>
+      <div className="card" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '600' }}>Today's Progress</h3>
           {!editingGoal ? (
@@ -117,7 +117,7 @@ export function HomePage() {
       </div>
 
       {/* Calendar */}
-      <div className="card" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-3)', maxWidth: '1000px' }}>
+      <div className="card" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
         <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 'var(--space-2)' }}>Review Calendar (Last 30 Days)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 'var(--space-1)' }}>
           {calendar.slice(0, 35).reverse().map((day, idx) => {
@@ -143,7 +143,7 @@ export function HomePage() {
       </div>
 
       {/* Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)', maxWidth: '1000px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)' }}>
         <div className="card" style={{ padding: 'var(--space-3)' }}>
           <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-1)' }}>
             Due Reviews
@@ -181,7 +181,7 @@ export function HomePage() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 'var(--space-3)', marginTop: 'var(--space-4)', maxWidth: '1000px' }}>
+      <div className="card" style={{ padding: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
         <h2 style={{ fontSize: '18px', marginBottom: 'var(--space-2)' }}>Quick Actions</h2>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
           <a href="/articles" className="btn btn-primary" style={{ textDecoration: 'none' }}>

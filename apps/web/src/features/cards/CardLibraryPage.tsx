@@ -208,7 +208,7 @@ export function CardLibraryPage() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            maxWidth: '800px',
+            
           }}
         >
           <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
@@ -244,7 +244,7 @@ export function CardLibraryPage() {
       )}
 
       {/* Filters */}
-      <div style={{ marginBottom: 'var(--space-3)', maxWidth: '800px' }}>
+      <div style={{ marginBottom: 'var(--space-3)' }}>
         <form onSubmit={handleSearch} style={{ marginBottom: 'var(--space-2)' }}>
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
             <input
@@ -302,11 +302,11 @@ export function CardLibraryPage() {
 
       {/* Cards List */}
       {loading ? (
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '800px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <p style={{ color: 'var(--gray-600)' }}>Loading cards...</p>
         </div>
       ) : expressions.length === 0 ? (
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '800px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <BookOpen size={48} color="var(--gray-400)" style={{ marginBottom: 'var(--space-3)' }} />
           <h3 style={{ marginBottom: 'var(--space-2)' }}>No cards yet</h3>
           <p style={{ color: 'var(--gray-600)' }}>
@@ -314,7 +314,7 @@ export function CardLibraryPage() {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-3)', maxWidth: '800px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-3)' }}>
           {expressions.map((expr) => {
             const isSelected = selectedIds.has(expr.id);
             

@@ -56,7 +56,7 @@ export function ExpressionDetailPage() {
         Back to Cards
       </button>
 
-      <div className="card" style={{ padding: 'var(--space-4)', marginBottom: 'var(--space-3)', maxWidth: '800px' }}>
+      <div className="card" style={{ padding: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
         <h1 style={{ fontSize: '32px', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
           {expression.expression}
         </h1>
@@ -122,7 +122,7 @@ export function ExpressionDetailPage() {
       </div>
 
       {occurrences.length > 0 && (
-        <div style={{ maxWidth: '800px' }}>
+        <div style={{ }}>
           <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
             <BookOpen size={20} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
             Contexts ({occurrences.length})

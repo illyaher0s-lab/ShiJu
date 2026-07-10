@@ -6,7 +6,7 @@ export function ArticleDetailPage() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{  margin: '0 auto' }}>
       <button 
         className="btn btn-secondary" 
         onClick={() => navigate('/import')}

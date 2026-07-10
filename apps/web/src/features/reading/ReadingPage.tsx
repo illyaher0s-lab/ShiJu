@@ -149,7 +149,7 @@ export function ReadingPage() {
         <header style={{ marginBottom: 'var(--space-4)' }}>
           <h1>Reading</h1>
         </header>
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '800px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <p style={{ color: 'var(--vercel-gray-600)' }}>Loading article...</p>
         </div>
       </>
@@ -162,7 +162,7 @@ export function ReadingPage() {
         <header style={{ marginBottom: 'var(--space-4)' }}>
           <h1>Reading</h1>
         </header>
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '800px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <p style={{ color: '#dc2626', marginBottom: 'var(--space-3)' }}>
             {error || 'No article or segment found'}
           </p>
@@ -239,7 +239,7 @@ export function ReadingPage() {
 
   return (
     <>
-      <header style={{ marginBottom: 'var(--space-4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '800px' }}>
+      <header style={{ marginBottom: 'var(--space-4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1>Reading</h1>
           <p style={{ color: 'var(--vercel-gray-600)', marginTop: 'var(--space-1)' }}>
@@ -252,13 +252,13 @@ export function ReadingPage() {
         </button>
       </header>
 
-      <div style={{ marginBottom: 'var(--space-4)', maxWidth: '800px' }}>
+      <div style={{ marginBottom: 'var(--space-4)' }}>
         <div style={{ height: '4px', background: 'var(--vercel-gray-200)', borderRadius: '2px', overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${progress}%`, background: 'var(--vercel-develop-blue)', transition: 'width 0.3s' }} />
         </div>
       </div>
 
-      <div className="card" style={{ padding: 'var(--space-5)', marginBottom: 'var(--space-3)', maxWidth: '800px', position: 'relative' }}
+      <div className="card" style={{ padding: 'var(--space-5)', marginBottom: 'var(--space-3)', position: 'relative' }}
            onMouseUp={handleMouseUp}>
         <div style={{ fontSize: '18px', lineHeight: '1.8', color: 'var(--vercel-gray-900)', whiteSpace: 'pre-wrap', userSelect: 'text' }}>
           {renderHighlightedText()}
@@ -290,7 +290,7 @@ export function ReadingPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)', maxWidth: '800px' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
         <button className="btn btn-secondary" onClick={() => setCurrentIndex(i => Math.max(0, i - 1))} disabled={currentIndex === 0} style={{ flex: 1 }}>
           <ChevronLeft size={16} />
           Previous

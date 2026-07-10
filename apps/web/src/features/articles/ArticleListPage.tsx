@@ -123,7 +123,7 @@ export function ArticleListPage() {
 
   return (
     <>
-      <header style={{ marginBottom: 'var(--space-4)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', maxWidth: '1000px' }}>
+      <header style={{ marginBottom: 'var(--space-4)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1>Articles</h1>
           <p style={{ color: 'var(--vercel-gray-600)', marginTop: 'var(--space-1)' }}>
@@ -189,7 +189,7 @@ export function ArticleListPage() {
             display: 'flex',
             alignItems: 'center',
             gap: 'var(--space-2)',
-            maxWidth: '1000px',
+            
           }}
         >
           <CheckCircle size={20} color="#16a34a" />
@@ -200,7 +200,7 @@ export function ArticleListPage() {
       )}
 
       {showImportForm && (
-        <div className="card" style={{ padding: 'var(--space-4)', marginBottom: 'var(--space-4)', maxWidth: '800px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
           {error && (
             <div
               style={{
@@ -295,7 +295,7 @@ export function ArticleListPage() {
 
       {/* Edit Mode Header */}
       {editMode && articles.length > 0 && (
-        <div style={{ marginBottom: 'var(--space-3)', maxWidth: '1000px' }}>
+        <div style={{ marginBottom: 'var(--space-3)' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer' }}>
             <input
               type="checkbox"
@@ -352,11 +352,11 @@ export function ArticleListPage() {
 
       {/* Articles List */}
       {loading ? (
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '1000px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <p style={{ color: 'var(--vercel-gray-600)' }}>Loading articles...</p>
         </div>
       ) : articles.length === 0 ? (
-        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center', maxWidth: '1000px' }}>
+        <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
           <BookOpen size={48} color="var(--vercel-gray-400)" style={{ marginBottom: 'var(--space-3)' }} />
           <h3 style={{ marginBottom: 'var(--space-2)' }}>No articles yet</h3>
           <p style={{ color: 'var(--vercel-gray-600)', marginBottom: 'var(--space-3)' }}>
@@ -368,7 +368,7 @@ export function ArticleListPage() {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', maxWidth: '1000px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
           {articles.map((article) => (
             <div
               key={article.id}
