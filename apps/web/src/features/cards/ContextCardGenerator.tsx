@@ -15,22 +15,39 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
   const [draft, setDraft] = useState<CandidateExpression | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recentContexts, setRecentContexts] = useState<string[]>(() => {
+    const saved = localStorage.getItem('shiju:recentContexts');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   async function generate() {
-    if (!expression.trim() || !contextLabel.trim()) return;
+    const expressions = expression.split(',').map(e => e.trim()).filter(Boolean);
+    if (expressions.length === 0) return;
     
     setGenerating(true);
     setError(null);
     try {
-      const result = await generateContextCard({
-        expression,
-        contextLabel,
-        contextNote,
-        sentence,
-      });
-      // Backend returns { candidate, duplicateExpressionSenseId, recommendation, recommendationReason }
-      // Extract the candidate object
-      setDraft(result.candidate);
+      for (const expr of expressions) {
+        const result = await generateContextCard({
+          expression: expr,
+          contextLabel,
+          contextNote,
+          sentence,
+        });
+        await onAccept(result.candidate);
+      }
+      
+      // ponytail: save to localStorage, no DB
+      if (contextLabel && !recentContexts.includes(contextLabel)) {
+        const updated = [contextLabel, ...recentContexts].slice(0, 10);
+        setRecentContexts(updated);
+        localStorage.setItem('shiju:recentContexts', JSON.stringify(updated));
+      }
+      
+      // Clear form after success
+      setExpression("");
+      setSentence("");
+      setContextNote("");
     } catch (err) {
       console.error('Failed to generate context card:', err);
       const message = err instanceof Error ? err.message : '生成失败，请稍后重试';
@@ -105,13 +122,13 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
               color: 'var(--vercel-gray-900)',
               marginBottom: '8px',
             }}>
-              Expression or phrase <span style={{ color: 'var(--vercel-ship-red)' }}>*</span>
+              Expression or phrase <span style={{ color: 'var(--vercel-ship-red)' }}>*</span>\n              <span style={{ fontSize: '13px', fontWeight: 400, color: 'var(--vercel-gray-500)' }}> (逗号分隔批量导入)</span>
             </label>
             <input
               type="text"
               value={expression}
               onChange={(e) => setExpression(e.target.value)}
-              placeholder="e.g., take a rain check, buff, nerf"
+              placeholder="e.g., take off, kick off, scale up"
               disabled={generating}
               style={{
                 width: '100%',
@@ -139,13 +156,14 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
               color: 'var(--vercel-gray-900)',
               marginBottom: '8px',
             }}>
-              Context <span style={{ color: 'var(--vercel-ship-red)' }}>*</span>
+              来源
             </label>
             <input
               type="text"
+              list="context-suggestions"
               value={contextLabel}
               onChange={(e) => setContextLabel(e.target.value)}
-              placeholder="e.g., gaming, conversation, work email"
+              placeholder="e.g., work email, meeting"
               disabled={generating}
               style={{
                 width: '100%',
@@ -162,6 +180,11 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
               onFocus={(e) => e.target.style.borderColor = 'var(--vercel-black)'}
               onBlur={(e) => e.target.style.borderColor = 'var(--vercel-gray-300)'}
             />
+            <datalist id="context-suggestions">
+              {recentContexts.map((ctx) => (
+                <option key={ctx} value={ctx} />
+              ))}
+            </datalist>
           </div>
 
           {/* Original sentence */}
@@ -259,7 +282,7 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
           {/* Generate button */}
           <button
             onClick={generate}
-            disabled={!expression.trim() || !contextLabel.trim() || generating}
+            disabled={!expression.trim() || generating}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -274,7 +297,7 @@ export function ContextCardGenerator({ onAccept }: ContextCardGeneratorProps) {
               borderRadius: 'var(--radius-md)',
               cursor: generating ? 'not-allowed' : 'pointer',
               transition: 'all 0.15s ease',
-              opacity: (!expression.trim() || !contextLabel.trim()) ? 0.5 : 1,
+              opacity: !expression.trim() ? 0.5 : 1,
             }}
             onMouseEnter={(e) => {
               if (!generating && expression.trim() && contextLabel.trim()) {
